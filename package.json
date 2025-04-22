@@ -1,0 +1,19 @@
+{
+  "name": "suipulse",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "sdk",
+    "demo-app",
+    "backend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=sdk && npm run build --workspace=demo-app",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}
