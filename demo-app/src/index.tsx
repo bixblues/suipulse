@@ -1,9 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
-import { getFullnodeUrl } from "@mysten/sui.js";
-import App from "./App";
+import { getFullnodeUrl } from "@mysten/sui.js/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import App from "./App.tsx";
 import "./index.css";
+
+const queryClient = new QueryClient();
+const networks = {
+  testnet: { url: getFullnodeUrl("testnet") },
+};
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -11,15 +17,12 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <SuiClientProvider
-      networks={{
-        testnet: { url: getFullnodeUrl("testnet") },
-      }}
-      defaultNetwork="testnet"
-    >
-      <WalletProvider>
-        <App />
-      </WalletProvider>
-    </SuiClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <SuiClientProvider networks={networks} defaultNetwork="testnet">
+        <WalletProvider>
+          <App />
+        </WalletProvider>
+      </SuiClientProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

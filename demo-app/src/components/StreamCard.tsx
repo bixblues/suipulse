@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { DataStream } from "@suipulse/sdk";
-import { useWallet } from "@mysten/dapp-kit";
+import { useCurrentWallet } from "@mysten/dapp-kit";
 
 interface StreamCardProps {
   stream: DataStream;
@@ -13,7 +13,7 @@ export const StreamCard: React.FC<StreamCardProps> = ({
   onUpdate,
   onSubscribe,
 }) => {
-  const { currentAccount } = useWallet();
+  const { currentWallet } = useCurrentWallet();
   const [newData, setNewData] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -29,7 +29,7 @@ export const StreamCard: React.FC<StreamCardProps> = ({
     setIsSubscribed(true);
   };
 
-  const isOwner = currentAccount?.address === stream.owner;
+  const isOwner = currentWallet?.accounts[0]?.address === stream.owner;
 
   return (
     <div className="border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
