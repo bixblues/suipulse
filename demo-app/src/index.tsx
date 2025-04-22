@@ -18,11 +18,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networks} defaultNetwork="testnet">
-        <WalletProvider>
-          <App />
-        </WalletProvider>
-      </SuiClientProvider>
+      <SuiClientProvider
+        networks={networks}
+        defaultNetwork="testnet"
+        children={<WalletProvider children={<App />} />}
+      />
     </QueryClientProvider>
   </React.StrictMode>
 );
