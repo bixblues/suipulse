@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { ConnectButton } from "@mysten/dapp-kit";
+import { Star } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -12,6 +12,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { LogoWithText } from "@/components/ui/LogoWithText";
 
 const components: { title: string; href: string; description: string }[] = [
   {
@@ -42,7 +43,7 @@ export function Navbar() {
     <div className="border-b">
       <div className="container flex h-16 items-center px-4">
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold">SuiPulse</span>
+          <LogoWithText />
         </Link>
         <NavigationMenu>
           <NavigationMenuList>
@@ -104,8 +105,16 @@ export function Navbar() {
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-        <div className="ml-auto flex items-center space-x-4">
-          <ConnectButton />
+        <div className="ml-auto flex items-center gap-4">
+          <a
+            href="https://github.com/suipulse/suipulse"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+          >
+            <Star className="h-4 w-4 transition-transform group-hover:scale-110" />
+            <span className="hidden sm:inline">Star this project</span>
+          </a>
         </div>
       </div>
     </div>
