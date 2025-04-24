@@ -91,8 +91,10 @@ export function throwIfInvalid(validation: ValidationResult): void {
 export function validateStreamId(streamId: string): ValidationResult {
   const errors: string[] = [];
 
-  if (!streamId || !streamId.startsWith("0x")) {
-    errors.push("Invalid stream ID format");
+  if (!streamId || !/^0x[a-fA-F0-9]{64}$/.test(streamId)) {
+    errors.push(
+      "Invalid stream ID format - must be a 64-character hex string prefixed with 0x"
+    );
   }
 
   return {
@@ -113,6 +115,65 @@ export function validateBatchSize(
 
   if (size > maxBatchSize) {
     errors.push(`Batch size cannot exceed ${maxBatchSize}`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+export function validateData(data: Uint8Array): ValidationResult {
+  const errors: string[] = [];
+
+  if (!(data instanceof Uint8Array)) {
+    errors.push("Data must be a Uint8Array");
+  }
+
+  if (data.length === 0) {
+    errors.push("Data cannot be empty");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+export function validateSnapshotData(
+  data: Record<string, any>
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (!data.id?.id || typeof data.id.id !== "string") {
+    errors.push("Invalid snapshot ID format");
+  }
+
+  if (!data.streamId?.id || typeof data.streamId.id !== "string") {
+    errors.push("Invalid stream ID format");
+  }
+
+  if (!Array.isArray(data.data)) {
+    errors.push("Data must be an array");
+  }
+
+  if (typeof data.timestamp !== "string") {
+    errors.push("Timestamp must be a string");
+  }
+
+  if (typeof data.version !== "string") {
+    errors.push("Version must be a string");
+  }
+
+  if (typeof data.metadata !== "string") {
+    errors.push("Metadata must be a string");
+  }
+
+  if (
+    typeof data.creator !== "string" ||
+    !/^0x[a-fA-F0-9]{64}$/.test(data.creator)
+  ) {
+    errors.push("Creator must be a valid Sui address");
   }
 
   return {

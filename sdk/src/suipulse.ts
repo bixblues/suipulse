@@ -1,7 +1,6 @@
 import {
   SuiClient,
   SuiTransactionBlockResponse,
-  SuiEventFilter,
   SuiMoveObject,
 } from "@mysten/sui.js/client";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
@@ -14,7 +13,6 @@ import {
   BatchStreamConfig,
   BatchUpdateConfig,
   BatchOperationResult,
-  StreamQueryOptions,
   SnapshotQueryOptions,
   SuiPulseError,
   SuiPulseErrorType,
@@ -25,11 +23,10 @@ import {
   validateSnapshotConfig,
   validateStreamId,
   validateAddress,
-  validatePermissionLevel,
   validateBatchSize,
   throwIfInvalid,
+  validateData,
 } from "./validation";
-import { SuiParsedData } from "@mysten/sui.js/client";
 
 export class SuiPulse {
   private client: SuiClient;
@@ -369,21 +366,33 @@ export class SuiPulse {
     streamId: string,
     data: Uint8Array
   ): Promise<SuiTransactionBlockResponse> {
-    const tx = new TransactionBlock();
+    try {
+      throwIfInvalid(validateStreamId(streamId));
+      throwIfInvalid(validateData(data));
 
-    tx.moveCall({
-      target: `${this.packageId}::data_stream::update_data_stream`,
-      arguments: [tx.object(streamId), tx.pure(data)],
-    });
+      const tx = new TransactionBlock();
 
-    return await this.client.signAndExecuteTransactionBlock({
-      transactionBlock: tx,
-      signer: this.signer,
-      options: {
-        showEffects: true,
-        showEvents: true,
-      },
-    });
+      tx.moveCall({
+        target: `${this.packageId}::data_stream::update_data_stream`,
+        arguments: [tx.object(streamId), tx.pure(data)],
+      });
+
+      return await this.client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: this.signer,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.TRANSACTION_FAILED,
+        `Failed to update stream: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
   }
 
   /**
@@ -605,6 +614,13 @@ export class SuiPulse {
 
     const fields = content.fields as Record<string, any>;
 
+    if (!this.validateSnapshotData(fields)) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.VALIDATION_ERROR,
+        "Invalid snapshot data format"
+      );
+    }
+
     return {
       id: fields.id || "",
       streamId: fields.streamId || "",
@@ -621,5 +637,177 @@ export class SuiPulse {
    */
   public cleanup(): void {
     this.events.cleanup();
+  }
+
+  /**
+   * Transfers a snapshot to a new owner
+   */
+  async transferSnapshot(
+    snapshotId: string,
+    recipient: string
+  ): Promise<SuiTransactionBlockResponse> {
+    try {
+      throwIfInvalid(validateAddress(recipient));
+
+      const tx = new TransactionBlock();
+
+      tx.moveCall({
+        target: `${this.packageId}::storage::transfer_snapshot`,
+        arguments: [tx.object(snapshotId), tx.pure(recipient)],
+      });
+
+      return await this.client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: this.signer,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.TRANSACTION_FAILED,
+        `Failed to transfer snapshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Updates a snapshot with new data
+   */
+  async updateSnapshot(
+    snapshotId: string,
+    newData: Uint8Array
+  ): Promise<SuiTransactionBlockResponse> {
+    try {
+      const tx = new TransactionBlock();
+
+      tx.moveCall({
+        target: `${this.packageId}::storage::update_snapshot`,
+        arguments: [tx.object(snapshotId), tx.pure(newData)],
+      });
+
+      return await this.client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: this.signer,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.TRANSACTION_FAILED,
+        `Failed to update snapshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Gets the creator address of a snapshot
+   */
+  async getSnapshotCreator(snapshotId: string): Promise<string> {
+    try {
+      const snapshot = await this.getSnapshotData(snapshotId);
+      return snapshot.creator;
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.QUERY_FAILED,
+        `Failed to get snapshot creator: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Gets the timestamp when the snapshot was created
+   */
+  async getSnapshotTimestamp(snapshotId: string): Promise<string> {
+    try {
+      const snapshot = await this.getSnapshotData(snapshotId);
+      return snapshot.timestamp;
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.QUERY_FAILED,
+        `Failed to get snapshot timestamp: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Gets the version of the stream when the snapshot was taken
+   */
+  async getSnapshotVersion(snapshotId: string): Promise<string> {
+    try {
+      const snapshot = await this.getSnapshotData(snapshotId);
+      return snapshot.version;
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.QUERY_FAILED,
+        `Failed to get snapshot version: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Verifies if a snapshot belongs to a specific stream
+   */
+  async verifySnapshotStream(
+    snapshotId: string,
+    streamId: string
+  ): Promise<boolean> {
+    try {
+      const tx = new TransactionBlock();
+
+      tx.moveCall({
+        target: `${this.packageId}::storage::verify_snapshot_stream`,
+        arguments: [tx.object(snapshotId), tx.object(streamId)],
+      });
+
+      const response = await this.client.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        signer: this.signer,
+        options: {
+          showEffects: true,
+          showEvents: true,
+        },
+      });
+
+      // Parse response to get boolean result
+      return response.effects?.status.status === "success";
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.QUERY_FAILED,
+        `Failed to verify snapshot stream: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
+   * Gets the stream ID associated with a snapshot
+   */
+  async getSnapshotStreamId(snapshotId: string): Promise<string> {
+    try {
+      const snapshot = await this.getSnapshotData(snapshotId);
+      return snapshot.streamId;
+    } catch (error) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.QUERY_FAILED,
+        `Failed to get snapshot stream ID: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
   }
 }

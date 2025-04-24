@@ -13,10 +13,27 @@ import {
   SuiPulseErrorType,
 } from "./types";
 
+export enum EventType {
+  StreamCreated = "StreamCreated",
+  StreamUpdated = "StreamUpdated",
+  SnapshotCreated = "SnapshotCreated",
+  SubscriberAdded = "SubscriberAdded",
+  StreamsComposed = "StreamsComposed",
+}
+
+type EventTypeMap = {
+  [EventType.StreamCreated]: DataStreamCreatedEvent;
+  [EventType.StreamUpdated]: DataStreamUpdatedEvent;
+  [EventType.SnapshotCreated]: SnapshotCreatedEvent;
+  [EventType.SubscriberAdded]: SubscriberAddedEvent;
+  [EventType.StreamsComposed]: StreamsComposedEvent;
+};
+
 export class EventManager {
-  private subscriptions: Map<string, Set<EventCallback<any>>> = new Map();
+  private subscriptions: Map<EventType, Set<EventCallback<any>>> = new Map();
   private eventPollingInterval: number = 1000; // 1 second default
-  private subscriptionHandles: Map<string, Promise<Unsubscribe>> = new Map();
+  private subscriptionHandles: Map<EventType, Promise<Unsubscribe>> = new Map();
+  private readonly MIN_POLLING_INTERVAL = 500;
 
   constructor(private client: SuiClient, private packageId: string) {}
 
@@ -24,54 +41,64 @@ export class EventManager {
    * Subscribe to stream creation events
    */
   public subscribeToStreamCreation(
-    callback: EventCallback<DataStreamCreatedEvent>
+    callback: EventCallback<EventTypeMap[EventType.StreamCreated]>
   ): () => void {
-    return this.subscribe("StreamCreated", callback);
+    return this.subscribe(EventType.StreamCreated, callback);
   }
 
   /**
    * Subscribe to stream update events
    */
   public subscribeToStreamUpdates(
-    callback: EventCallback<DataStreamUpdatedEvent>
+    callback: EventCallback<EventTypeMap[EventType.StreamUpdated]>
   ): () => void {
-    return this.subscribe("StreamUpdated", callback);
+    return this.subscribe(EventType.StreamUpdated, callback);
   }
 
   /**
    * Subscribe to snapshot creation events
    */
   public subscribeToSnapshotCreation(
-    callback: EventCallback<SnapshotCreatedEvent>
+    callback: EventCallback<EventTypeMap[EventType.SnapshotCreated]>
   ): () => void {
-    return this.subscribe("SnapshotCreated", callback);
+    return this.subscribe(EventType.SnapshotCreated, callback);
   }
 
   /**
    * Subscribe to subscriber added events
    */
   public subscribeToSubscriberAdded(
-    callback: EventCallback<SubscriberAddedEvent>
+    callback: EventCallback<EventTypeMap[EventType.SubscriberAdded]>
   ): () => void {
-    return this.subscribe("SubscriberAdded", callback);
+    return this.subscribe(EventType.SubscriberAdded, callback);
   }
 
   /**
    * Subscribe to streams composed events
    */
   public subscribeToStreamsComposed(
-    callback: EventCallback<StreamsComposedEvent>
+    callback: EventCallback<EventTypeMap[EventType.StreamsComposed]>
   ): () => void {
-    return this.subscribe("StreamsComposed", callback);
+    return this.subscribe(EventType.StreamsComposed, callback);
   }
 
-  private subscribe<T>(
-    eventType: string,
-    callback: EventCallback<T>
+  private subscribe<T extends EventType>(
+    eventType: T,
+    callback: EventCallback<EventTypeMap[T]>
   ): () => void {
+    if (!Object.values(EventType).includes(eventType)) {
+      throw new SuiPulseError(
+        SuiPulseErrorType.INVALID_INPUT,
+        `Invalid event type: ${eventType}`
+      );
+    }
+
     if (!this.subscriptions.has(eventType)) {
       this.subscriptions.set(eventType, new Set());
-      this.startSubscription(eventType);
+      this.startSubscription(eventType).catch((error) => {
+        console.error(`Failed to start subscription: ${error}`);
+        this.subscriptions.delete(eventType);
+      });
     }
 
     this.subscriptions.get(eventType)!.add(callback);
@@ -82,63 +109,73 @@ export class EventManager {
         callbacks.delete(callback);
         if (callbacks.size === 0) {
           this.subscriptions.delete(eventType);
-          this.stopSubscription(eventType);
+          this.stopSubscription(eventType).catch(console.error);
         }
       }
     };
   }
 
-  private async startSubscription(eventType: string): Promise<void> {
+  private async startSubscription(eventType: EventType): Promise<void> {
     try {
       const unsubscribePromise = this.client.subscribeEvent({
         filter: {
           MoveEventType: `${this.packageId}::data_stream::${eventType}`,
         },
-        onMessage: (event: SuiEvent) => {
-          const callbacks = this.subscriptions.get(eventType);
-          if (callbacks) {
-            for (const callback of callbacks) {
-              try {
-                callback(event.parsedJson);
-              } catch (error) {
-                console.error(
-                  `Error in event callback for ${eventType}:`,
-                  error
-                );
-              }
-            }
-          }
-        },
+        onMessage: this.createMessageHandler(eventType),
       });
 
       this.subscriptionHandles.set(eventType, unsubscribePromise);
 
-      // Handle subscription errors
       try {
         await unsubscribePromise;
       } catch (error) {
-        console.error(`Subscription error for ${eventType}:`, error);
-        // Attempt to reconnect after a delay
-        setTimeout(() => {
-          if (this.subscriptions.has(eventType)) {
-            this.stopSubscription(eventType);
-            this.startSubscription(eventType);
-          }
-        }, this.eventPollingInterval);
+        this.handleSubscriptionError(eventType, error);
       }
     } catch (error) {
-      console.error(`Failed to start subscription for ${eventType}:`, error);
+      throw new SuiPulseError(
+        SuiPulseErrorType.SUBSCRIPTION_FAILED,
+        `Failed to start subscription for ${eventType}: ${error}`
+      );
     }
   }
 
-  private async stopSubscription(eventType: string): Promise<void> {
+  private createMessageHandler(eventType: EventType) {
+    return (event: SuiEvent) => {
+      const callbacks = this.subscriptions.get(eventType);
+      if (callbacks) {
+        for (const callback of callbacks) {
+          try {
+            callback(event.parsedJson);
+          } catch (error) {
+            console.error(`Error in event callback for ${eventType}:`, error);
+          }
+        }
+      }
+    };
+  }
+
+  private handleSubscriptionError(eventType: EventType, error: unknown): void {
+    console.error(`Subscription error for ${eventType}:`, error);
+    setTimeout(() => {
+      if (this.subscriptions.has(eventType)) {
+        this.stopSubscription(eventType)
+          .then(() => this.startSubscription(eventType))
+          .catch(console.error);
+      }
+    }, this.eventPollingInterval);
+  }
+
+  private async stopSubscription(eventType: EventType): Promise<void> {
     const unsubscribePromise = this.subscriptionHandles.get(eventType);
     if (unsubscribePromise) {
       try {
         const unsubscribe = await unsubscribePromise;
         await unsubscribe();
       } catch (error) {
-        console.error(`Error unsubscribing from ${eventType}:`, error);
+        throw new SuiPulseError(
+          SuiPulseErrorType.SUBSCRIPTION_FAILED,
+          `Error unsubscribing from ${eventType}: ${error}`
+        );
       }
       this.subscriptionHandles.delete(eventType);
     }
@@ -148,10 +185,10 @@ export class EventManager {
    * Set the polling interval for reconnection attempts
    */
   public setPollingInterval(interval: number): void {
-    if (interval < 500) {
+    if (interval < this.MIN_POLLING_INTERVAL) {
       throw new SuiPulseError(
         SuiPulseErrorType.INVALID_INPUT,
-        "Polling interval cannot be less than 500ms"
+        `Polling interval cannot be less than ${this.MIN_POLLING_INTERVAL}ms`
       );
     }
     this.eventPollingInterval = interval;
