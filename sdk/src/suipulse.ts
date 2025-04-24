@@ -52,15 +52,34 @@ export class SuiPulse {
 
       const tx = new TransactionBlock();
 
+      // Convert metadata to Uint8Array if it's not already
+      const metadataBytes = config.metadata
+        ? ArrayBuffer.isView(config.metadata)
+          ? config.metadata
+          : new Uint8Array(
+              Array.isArray(config.metadata) ? config.metadata : []
+            )
+        : new Uint8Array([]);
+
+      // Convert schema to Uint8Array if it's not already
+      const schemaBytes = config.schema
+        ? ArrayBuffer.isView(config.schema)
+          ? config.schema
+          : new Uint8Array(Array.isArray(config.schema) ? config.schema : [])
+        : new Uint8Array([]);
+
+      // Ensure tags is an array of strings
+      const tags = Array.isArray(config.tags) ? config.tags : [];
+
       const result = tx.moveCall({
         target: `${this.packageId}::data_stream::create_data_stream`,
         arguments: [
           tx.pure(config.name),
           tx.pure(config.description),
           tx.pure(config.isPublic),
-          tx.pure(Array.from(config.metadata || new Uint8Array())),
-          tx.pure([]),
-          tx.pure([]),
+          tx.pure(Array.from(metadataBytes as Uint8Array)),
+          tx.pure(Array.from(schemaBytes as Uint8Array)),
+          tx.pure(tags),
         ],
       });
 
@@ -471,32 +490,83 @@ export class SuiPulse {
       throwIfInvalid(validateStreamId(streamId));
       throwIfInvalid(validateData(data));
 
-      // Get the stream object to verify ownership
-      const stream = await this.getDataStream(streamId);
-      const signerAddress = this.signer.getPublicKey().toSuiAddress();
+      let retries = 3;
+      let lastError: Error | null = null;
 
-      if (stream.owner !== signerAddress) {
-        throw new SuiPulseError(
-          SuiPulseErrorType.PERMISSION_DENIED,
-          `You do not own the stream. Owner: ${stream.owner}, Your address: ${signerAddress}`
-        );
+      while (retries > 0) {
+        try {
+          // Get the stream object to verify ownership
+          const stream = await this.getDataStream(streamId);
+          const signerAddress = this.signer.getPublicKey().toSuiAddress();
+
+          if (stream.owner !== signerAddress) {
+            throw new SuiPulseError(
+              SuiPulseErrorType.PERMISSION_DENIED,
+              `You do not own the stream. Owner: ${stream.owner}, Your address: ${signerAddress}`
+            );
+          }
+
+          const tx = new TransactionBlock();
+
+          // Get the latest version of the stream right before creating the transaction
+          const latestStream = await this.client.getObject({
+            id: streamId,
+            options: {
+              showContent: true,
+            },
+          });
+
+          if (!latestStream.data?.version || !latestStream.data?.digest) {
+            throw new SuiPulseError(
+              SuiPulseErrorType.TRANSACTION_FAILED,
+              "Failed to update stream: Stream not found or has no version/digest"
+            );
+          }
+
+          // Use the latest version of the stream
+          const streamRef = tx.objectRef({
+            objectId: streamId,
+            version: latestStream.data.version,
+            digest: latestStream.data.digest,
+          });
+
+          tx.moveCall({
+            target: `${this.packageId}::data_stream::update_data_stream`,
+            arguments: [streamRef, tx.pure(Array.from(data))],
+          });
+
+          return await this.client.signAndExecuteTransactionBlock({
+            transactionBlock: tx,
+            signer: this.signer,
+            options: {
+              showEffects: true,
+              showEvents: true,
+            },
+          });
+        } catch (error) {
+          lastError = error as Error;
+          if (
+            error instanceof Error &&
+            error.message.includes("is not available for consumption")
+          ) {
+            retries--;
+            if (retries === 0) {
+              break;
+            }
+            // Wait for a short time before retrying
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            continue;
+          }
+          throw error;
+        }
       }
 
-      const tx = new TransactionBlock();
-
-      tx.moveCall({
-        target: `${this.packageId}::data_stream::update_data_stream`,
-        arguments: [tx.object(streamId), tx.pure(Array.from(data))],
-      });
-
-      return await this.client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: this.signer,
-        options: {
-          showEffects: true,
-          showEvents: true,
-        },
-      });
+      throw new SuiPulseError(
+        SuiPulseErrorType.TRANSACTION_FAILED,
+        `Failed to update stream after ${retries} retries: ${
+          lastError?.message || "Unknown error"
+        }`
+      );
     } catch (error) {
       throw new SuiPulseError(
         SuiPulseErrorType.TRANSACTION_FAILED,
@@ -615,13 +685,31 @@ export class SuiPulse {
       ).fields;
 
       // Debug logging
-      console.log("Stream fields:", JSON.stringify(fields, null, 2));
+      console.log("Raw stream fields:", JSON.stringify(fields, null, 2));
 
       if (!this.validateDataStream(fields)) {
         throw new Error("Invalid data stream format");
       }
 
-      return fields as DataStreamObject;
+      // Convert data field to Uint8Array if it's a string
+      const dataField = fields.data;
+      if (typeof dataField === "string") {
+        try {
+          const dataBytes = new Uint8Array(Buffer.from(dataField, "base64"));
+          return {
+            ...fields,
+            data: dataBytes,
+          } as unknown as DataStreamObject;
+        } catch (error) {
+          console.warn("Failed to convert data field to Uint8Array:", error);
+          return {
+            ...fields,
+            data: new Uint8Array([]),
+          } as unknown as DataStreamObject;
+        }
+      }
+
+      return fields as unknown as DataStreamObject;
     } catch (error) {
       throw new Error(
         `Failed to get data stream: ${

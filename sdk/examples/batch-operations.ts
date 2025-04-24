@@ -8,20 +8,57 @@ const NETWORKS = {
     fullnode: "https://fullnode.mainnet.sui.io:443",
   },
   testnet: {
-    packageId: "0x...", // Replace with testnet package ID
+    packageId:
+      "0x94d890a5677922d1f2e51724ba9439a422235bc8e8de0ad7d8b4e06827c8d750",
     fullnode: "https://fullnode.testnet.sui.io:443",
   },
 };
 
+// Helper function to wait for a specified time
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Helper function to retry an operation
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number,
+  delayMs: number
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      if (i < maxRetries - 1) {
+        console.log(`Retry ${i + 1}/${maxRetries} after error:`, error);
+        await wait(delayMs);
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function main() {
   try {
     // Initialize SDK with testnet configuration
-    const client = new SuiClient({ url: NETWORKS.testnet.fullnode });
-    const keypair = Ed25519Keypair.generate();
-    const suiPulse = new SuiPulse(client, NETWORKS.testnet.packageId, keypair);
+    const network = "testnet";
+    const config = NETWORKS[network];
+
+    // Create Sui client
+    const client = new SuiClient({ url: config.fullnode });
+
+    // Import keypair from private key (replace with your private key)
+    const privateKey =
+      "53cf1d0167e860510c638241bcee690085432af368a44871b20673d46b4f3af7"; // Replace with your private key
+    const keypair = Ed25519Keypair.fromSecretKey(
+      Buffer.from(privateKey, "hex")
+    );
+
+    // Initialize SuiPulse SDK
+    const suiPulse = new SuiPulse(client, config.packageId, keypair);
 
     // Example 1: Create multiple streams in batch
-    console.log("Creating multiple streams in batch...");
+    console.log("\n=== Creating Multiple Streams in Batch ===");
     const createResult = await suiPulse.createStreamsBatch({
       streams: [
         {
@@ -29,76 +66,137 @@ async function main() {
           description: "First stream in batch",
           isPublic: true,
           metadata: new Uint8Array([1, 2, 3]),
-          tags: ["batch", "test"],
+          schema: "test_schema_1",
+          tags: ["batch", "test", "stream1"],
         },
         {
           name: "Batch Stream 2",
           description: "Second stream in batch",
           isPublic: true,
           metadata: new Uint8Array([4, 5, 6]),
-          tags: ["batch", "test"],
+          schema: "test_schema_2",
+          tags: ["batch", "test", "stream2"],
+        },
+        {
+          name: "Batch Stream 3",
+          description: "Third stream in batch",
+          isPublic: false,
+          metadata: new Uint8Array([7, 8, 9]),
+          schema: "test_schema_3",
+          tags: ["batch", "test", "stream3"],
         },
       ],
       options: {
-        parallel: true, // Process streams in parallel
+        parallel: false, // Process streams sequentially to avoid conflicts
       },
     });
 
-    console.log("Batch creation results:");
-    console.log(`Total streams: ${createResult.summary.total}`);
-    console.log(`Successful: ${createResult.summary.succeeded}`);
-    console.log(`Failed: ${createResult.summary.failed}`);
+    console.log("\nBatch Creation Results:");
+    console.log(`Total streams attempted: ${createResult.summary.total}`);
+    console.log(`Successfully created: ${createResult.summary.succeeded}`);
+    console.log(`Failed to create: ${createResult.summary.failed}`);
 
-    // Example 2: Update multiple streams in batch
-    console.log("\nUpdating multiple streams in batch...");
-    const streamIds = createResult.successful
-      .map((stream) => {
-        // Each successful stream creation returns a SuiTransactionBlockResponse
-        const response = stream as any;
-        const createdObject = response.effects?.created?.[0];
-        if (!createdObject) {
-          console.warn("No created object found in response");
-          return null;
+    if (createResult.failed.length > 0) {
+      console.log("\nFailed Streams:");
+      createResult.failed.forEach((failure) => {
+        console.log(`Config: ${JSON.stringify(failure.item)}`);
+        console.log(`Error: ${failure.error.message}`);
+      });
+    }
+
+    // Get stream IDs from successful creations
+    const signerAddress = keypair.getPublicKey().toSuiAddress();
+    const streams = await client.getOwnedObjects({
+      owner: signerAddress,
+      options: {
+        showContent: true,
+      },
+    });
+
+    const streamIds: string[] = [];
+    for (const streamConfig of createResult.successful) {
+      const matchingStream = streams.data.find((obj) => {
+        if (!obj.data?.content || obj.data.content.dataType !== "moveObject") {
+          return false;
         }
-        return createdObject.reference.objectId;
-      })
-      .filter(Boolean);
+        const fields = (obj.data.content as any).fields;
+        return (
+          fields.name === streamConfig.name &&
+          fields.description === streamConfig.description
+        );
+      });
+
+      if (matchingStream?.data?.objectId) {
+        streamIds.push(matchingStream.data.objectId);
+      } else {
+        console.warn(
+          `No matching stream found for config: ${JSON.stringify(streamConfig)}`
+        );
+      }
+    }
 
     if (streamIds.length === 0) {
-      console.log("No valid stream IDs found for updates");
+      console.log("\nNo valid stream IDs found for updates");
       return;
     }
 
-    console.log(`Found ${streamIds.length} streams to update`);
-    console.log("Stream IDs:", streamIds);
+    console.log("\nCreated Stream IDs:", streamIds);
 
+    // Wait for transactions to be finalized
+    console.log("\nWaiting for transactions to be finalized...");
+    await wait(5000); // Wait 5 seconds for transactions to be finalized
+
+    // Example 2: Update multiple streams in batch
+    console.log("\n=== Updating Multiple Streams in Batch ===");
     const updateResult = await suiPulse.updateStreamsBatch({
       updates: streamIds.map((id) => ({
         streamId: id,
-        data: new Uint8Array([7, 8, 9]),
+        data: new Uint8Array([10, 11, 12]),
       })),
       options: {
-        parallel: true,
-        retryCount: 3, // Retry failed updates up to 3 times
+        parallel: false, // Process updates sequentially
       },
     });
 
-    console.log("Batch update results:");
-    console.log(`Total updates: ${updateResult.summary.total}`);
-    console.log(`Successful: ${updateResult.summary.succeeded}`);
-    console.log(`Failed: ${updateResult.summary.failed}`);
+    console.log("\nBatch Update Results:");
+    console.log(`Total updates attempted: ${updateResult.summary.total}`);
+    console.log(`Successfully updated: ${updateResult.summary.succeeded}`);
+    console.log(`Failed to update: ${updateResult.summary.failed}`);
 
     if (updateResult.failed.length > 0) {
-      console.log("\nFailed updates:");
+      console.log("\nFailed Updates:");
       updateResult.failed.forEach((failure) => {
         console.log(`Stream ID: ${failure.item.streamId}`);
         console.log(`Error: ${failure.error.message}`);
       });
     }
 
+    // Wait for update transactions to be finalized
+    console.log("\nWaiting for update transactions to be finalized...");
+    await wait(5000);
+
+    // Verify the updates
+    console.log("\n=== Verifying Stream Updates ===");
+    for (const streamId of streamIds) {
+      try {
+        const stream = await retryOperation(
+          () => suiPulse.getDataStream(streamId),
+          3,
+          2000
+        );
+        console.log(`\nStream ${streamId}:`);
+        console.log(`Version: ${stream.version}`);
+        console.log(`Data: ${Array.from(stream.data)}`);
+        console.log(`Last Updated: ${stream.last_updated}`);
+      } catch (error) {
+        console.error(`Failed to verify stream ${streamId}:`, error);
+      }
+    }
+
     // Cleanup
+    console.log("\n=== Cleaning Up ===");
     suiPulse.cleanup();
-    console.log("\nBatch operations example completed successfully!");
+    console.log("Batch operations example completed successfully!");
   } catch (error) {
     console.error("Error in batch operations example:", error);
   }

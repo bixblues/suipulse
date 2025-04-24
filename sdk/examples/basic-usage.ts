@@ -35,36 +35,77 @@ async function main() {
     const suiPulse = new SuiPulse(client, config.packageId, keypair);
 
     // Create a new data stream
+    console.log("Creating a new data stream...");
     const streamResponse = await suiPulse.createStream({
       name: "Test Stream",
       description: "A test data stream",
       isPublic: true,
       metadata: new Uint8Array([1, 2, 3]),
-      // Remove tags for now as it's causing issues with tx.pure()
+      schema: "test_schema",
+      tags: ["test", "example", "sdk"],
     });
-    console.log("Stream created:", streamResponse);
 
-    // Extract stream ID from the response
+    // Get the stream ID from the response
     const streamId = streamResponse.effects?.created?.[0]?.reference?.objectId;
     if (!streamId) {
       throw new Error("Failed to get stream ID from response");
     }
-    console.log("Stream ID:", streamId);
+    console.log("Stream created with ID:", streamId);
 
-    // Update stream data
-    await suiPulse.updateStream(streamId, new Uint8Array([4, 5, 6]));
-    console.log("Stream data updated successfully");
+    // Get the initial stream data
+    console.log("Getting initial stream data...");
+    const initialStream = await suiPulse.getDataStream(streamId);
+    console.log("Initial stream data:", {
+      ...initialStream,
+      data: initialStream.data ? Array.from(initialStream.data) : null,
+    });
+
+    // Subscribe to stream updates
+    console.log("Subscribing to stream updates...");
+    try {
+      await suiPulse.subscribeToStream(streamId);
+      console.log("Successfully subscribed to stream updates");
+    } catch (error) {
+      console.warn("Warning: Failed to subscribe to stream updates:", error);
+    }
+
+    // Update the stream data
+    console.log("Updating stream data...");
+    const updateResponse = await suiPulse.updateStream(
+      streamId,
+      new Uint8Array([4, 5, 6])
+    );
+    console.log("Update transaction:", {
+      digest: updateResponse.digest,
+      status: updateResponse.effects?.status?.status,
+      gasUsed: updateResponse.effects?.gasUsed,
+    });
+
+    // Wait for the update to be finalized
+    console.log("Waiting for update to be finalized...");
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Get the updated stream data
+    console.log("Getting updated stream data...");
+    const updatedStream = await suiPulse.getDataStream(streamId);
+    console.log("Updated stream data:", {
+      ...updatedStream,
+      data: updatedStream.data ? Array.from(updatedStream.data) : null,
+    });
 
     // Create a snapshot
+    console.log("Creating a snapshot...");
     const snapshotResponse = await suiPulse.createSnapshot(streamId, {
-      metadata: "Test snapshot",
+      metadata: "Test snapshot metadata",
     });
-    console.log("Snapshot created:", snapshotResponse);
+    console.log("Snapshot transaction:", {
+      digest: snapshotResponse.digest,
+      status: snapshotResponse.effects?.status?.status,
+      gasUsed: snapshotResponse.effects?.gasUsed,
+    });
 
-    // Get stream data
-    const streamData = await suiPulse.getDataStream(streamId);
-    console.log("Stream data:", streamData);
-
+    // Cleanup
+    console.log("Cleaning up...");
     suiPulse.cleanup();
   } catch (error) {
     console.error("Error:", error);

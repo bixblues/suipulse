@@ -5,10 +5,18 @@ export interface DataStreamObject {
   type: string;
   owner: string;
   subscribers: string[];
-  data: string;
+  data: Uint8Array;
   version: string;
-  timestamp: string;
+  last_updated: string;
   schema?: string;
+  name: string;
+  description: string;
+  is_public: boolean;
+  metadata: Uint8Array;
+  tags: string[];
+  parent_streams: string[];
+  permissions: Permission[];
+  walrus_id?: string;
 }
 
 export interface DataStream {
