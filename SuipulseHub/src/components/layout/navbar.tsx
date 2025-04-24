@@ -67,11 +67,8 @@ export function Navbar() {
                       </a>
                     </NavigationMenuLink>
                   </li>
-                  <ListItem href="/docs/quickstart" title="Quick Start">
+                  <ListItem href="/docs/quick-start" title="Quick Start">
                     Get started with SuiPulse in under 5 minutes.
-                  </ListItem>
-                  <ListItem href="/docs/tutorials" title="Tutorials">
-                    Step-by-step guides for building with SuiPulse.
                   </ListItem>
                   <ListItem href="/docs/examples" title="Examples">
                     View example projects and implementations.
