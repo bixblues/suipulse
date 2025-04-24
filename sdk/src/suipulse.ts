@@ -52,19 +52,23 @@ export class SuiPulse {
 
       const tx = new TransactionBlock();
 
-      tx.moveCall({
+      const result = tx.moveCall({
         target: `${this.packageId}::data_stream::create_data_stream`,
         arguments: [
           tx.pure(config.name),
           tx.pure(config.description),
           tx.pure(config.isPublic),
-          tx.pure(config.metadata || new Uint8Array()),
-          tx.pure(config.schema || null),
-          tx.pure(config.tags || []),
+          tx.pure(Array.from(config.metadata || new Uint8Array())),
+          tx.pure([]),
+          tx.pure([]),
         ],
       });
 
-      return await this.client.signAndExecuteTransactionBlock({
+      // Transfer the created stream to the signer's address
+      const signerAddress = this.signer.getPublicKey().toSuiAddress();
+      tx.transferObjects([result], tx.pure(signerAddress));
+
+      const response = await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
         signer: this.signer,
         options: {
@@ -72,6 +76,47 @@ export class SuiPulse {
           showEvents: true,
         },
       });
+
+      // Verify the stream was created and transferred
+      const createdObjects = response.effects?.created;
+      if (!createdObjects || createdObjects.length === 0) {
+        throw new SuiPulseError(
+          SuiPulseErrorType.TRANSACTION_FAILED,
+          "Failed to create stream: No objects were created"
+        );
+      }
+
+      // Get the stream ID from the created objects
+      const streamId = createdObjects[0].reference.objectId;
+      if (!streamId) {
+        throw new SuiPulseError(
+          SuiPulseErrorType.TRANSACTION_FAILED,
+          "Failed to create stream: No stream ID found"
+        );
+      }
+
+      // Wait for the stream to be accessible
+      let retries = 5;
+      while (retries > 0) {
+        try {
+          await this.getDataStream(streamId);
+          break;
+        } catch (error) {
+          retries--;
+          if (retries === 0) {
+            throw new SuiPulseError(
+              SuiPulseErrorType.TRANSACTION_FAILED,
+              `Failed to create stream: Stream not accessible after creation. Error: ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            );
+          }
+          // Wait for 1 second before retrying
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+
+      return response;
     } catch (error) {
       throw new SuiPulseError(
         SuiPulseErrorType.TRANSACTION_FAILED,
@@ -224,21 +269,77 @@ export class SuiPulse {
       throwIfInvalid(validateStreamId(streamId));
       throwIfInvalid(validateSnapshotConfig(config));
 
-      const tx = new TransactionBlock();
+      let retries = 3;
+      let lastError: Error | null = null;
 
-      tx.moveCall({
-        target: `${this.packageId}::storage::create_snapshot`,
-        arguments: [tx.object(streamId), tx.pure(config.metadata)],
-      });
+      while (retries > 0) {
+        try {
+          const tx = new TransactionBlock();
 
-      return await this.client.signAndExecuteTransactionBlock({
-        transactionBlock: tx,
-        signer: this.signer,
-        options: {
-          showEffects: true,
-          showEvents: true,
-        },
-      });
+          // Get the latest version of the stream right before creating the transaction
+          const stream = await this.client.getObject({
+            id: streamId,
+            options: {
+              showContent: true,
+            },
+          });
+
+          if (!stream.data?.version || !stream.data?.digest) {
+            throw new SuiPulseError(
+              SuiPulseErrorType.TRANSACTION_FAILED,
+              "Failed to create snapshot: Stream not found or has no version/digest"
+            );
+          }
+
+          // Use the latest version of the stream
+          const streamRef = tx.objectRef({
+            objectId: streamId,
+            version: stream.data.version,
+            digest: stream.data.digest,
+          });
+
+          const result = tx.moveCall({
+            target: `${this.packageId}::storage::create_snapshot`,
+            arguments: [streamRef, tx.pure(config.metadata)],
+          });
+
+          // Transfer the created snapshot to the signer's address
+          const signerAddress = this.signer.getPublicKey().toSuiAddress();
+          tx.transferObjects([result], tx.pure(signerAddress));
+
+          // Execute the transaction immediately after getting the latest version
+          return await this.client.signAndExecuteTransactionBlock({
+            transactionBlock: tx,
+            signer: this.signer,
+            options: {
+              showEffects: true,
+              showEvents: true,
+            },
+          });
+        } catch (error) {
+          lastError = error as Error;
+          if (
+            error instanceof Error &&
+            error.message.includes("is not available for consumption")
+          ) {
+            retries--;
+            if (retries === 0) {
+              break;
+            }
+            // Wait for a short time before retrying
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            continue;
+          }
+          throw error;
+        }
+      }
+
+      throw new SuiPulseError(
+        SuiPulseErrorType.TRANSACTION_FAILED,
+        `Failed to create snapshot after ${retries} retries: ${
+          lastError?.message || "Unknown error"
+        }`
+      );
     } catch (error) {
       throw new SuiPulseError(
         SuiPulseErrorType.TRANSACTION_FAILED,
@@ -370,11 +471,22 @@ export class SuiPulse {
       throwIfInvalid(validateStreamId(streamId));
       throwIfInvalid(validateData(data));
 
+      // Get the stream object to verify ownership
+      const stream = await this.getDataStream(streamId);
+      const signerAddress = this.signer.getPublicKey().toSuiAddress();
+
+      if (stream.owner !== signerAddress) {
+        throw new SuiPulseError(
+          SuiPulseErrorType.PERMISSION_DENIED,
+          `You do not own the stream. Owner: ${stream.owner}, Your address: ${signerAddress}`
+        );
+      }
+
       const tx = new TransactionBlock();
 
       tx.moveCall({
         target: `${this.packageId}::data_stream::update_data_stream`,
-        arguments: [tx.object(streamId), tx.pure(data)],
+        arguments: [tx.object(streamId), tx.pure(Array.from(data))],
       });
 
       return await this.client.signAndExecuteTransactionBlock({
@@ -502,6 +614,9 @@ export class SuiPulse {
         stream.data.content as { fields: Record<string, unknown> }
       ).fields;
 
+      // Debug logging
+      console.log("Stream fields:", JSON.stringify(fields, null, 2));
+
       if (!this.validateDataStream(fields)) {
         throw new Error("Invalid data stream format");
       }
@@ -521,12 +636,20 @@ export class SuiPulse {
     return (
       typeof data === "object" &&
       data !== null &&
-      typeof record.type === "string" &&
+      typeof record.id === "object" &&
       typeof record.owner === "string" &&
-      Array.isArray(record.subscribers) &&
-      typeof record.data === "string" &&
+      typeof record.name === "string" &&
+      typeof record.description === "string" &&
+      typeof record.is_public === "boolean" &&
+      Array.isArray(record.metadata) &&
+      (record.schema === null || typeof record.schema === "object") &&
+      Array.isArray(record.tags) &&
       typeof record.version === "string" &&
-      typeof record.timestamp === "string"
+      typeof record.last_updated === "string" &&
+      Array.isArray(record.subscribers) &&
+      Array.isArray(record.parent_streams) &&
+      Array.isArray(record.permissions) &&
+      (record.walrus_id === null || typeof record.walrus_id === "string")
     );
   }
 

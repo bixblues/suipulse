@@ -14,7 +14,8 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@mysten/sui.js": "^0.42.0"
+    "@mysten/sui.js": "^0.42.0",
+    "bech32": "^2.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

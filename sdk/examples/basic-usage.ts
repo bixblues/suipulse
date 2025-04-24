@@ -1,72 +1,75 @@
 import { SuiClient } from "@mysten/sui.js/client";
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
-import { SuiPulse } from "../src/suipulse";
-import { DataStreamCreatedEvent, DataStreamUpdatedEvent } from "../src/types";
+import { SuiPulse } from "../src";
+
+// Network configurations
+const NETWORKS = {
+  mainnet: {
+    packageId: "0x...", // Mainnet package ID
+    fullnode: "https://fullnode.mainnet.sui.io:443",
+  },
+  testnet: {
+    packageId:
+      "0x94d890a5677922d1f2e51724ba9439a422235bc8e8de0ad7d8b4e06827c8d750", // Your testnet package ID
+    fullnode: "https://fullnode.testnet.sui.io:443",
+  },
+};
 
 async function main() {
-  // Initialize client and keypair
-  const client = new SuiClient({ url: "https://fullnode.testnet.sui.io:443" });
-  const keypair = Ed25519Keypair.generate();
-  
-  // Initialize SuiPulse with your package ID
-  const packageId = "0x..."; // Your deployed package ID
-  const suiPulse = new SuiPulse(client, packageId, keypair);
-
   try {
-    // Create a new stream
-    const stream = await suiPulse.createStream({
+    // Initialize with testnet configuration
+    const network = "testnet";
+    const config = NETWORKS[network];
+
+    // Create Sui client
+    const client = new SuiClient({ url: config.fullnode });
+
+    // Import keypair from private key (replace with your private key)
+    const privateKey =
+      "53cf1d0167e860510c638241bcee690085432af368a44871b20673d46b4f3af7"; // Replace with your private key
+    const keypair = Ed25519Keypair.fromSecretKey(
+      Buffer.from(privateKey, "hex")
+    );
+
+    // Initialize SuiPulse SDK
+    const suiPulse = new SuiPulse(client, config.packageId, keypair);
+
+    // Create a new data stream
+    const streamResponse = await suiPulse.createStream({
       name: "Test Stream",
       description: "A test data stream",
       isPublic: true,
-      tags: ["test", "example"]
+      metadata: new Uint8Array([1, 2, 3]),
+      // Remove tags for now as it's causing issues with tx.pure()
     });
-    console.log("Stream created:", stream);
+    console.log("Stream created:", streamResponse);
 
-    // Subscribe to stream creation events
-    const subscription = suiPulse.events.onStreamCreated(
-      (event: DataStreamCreatedEvent) => {
-        console.log("New stream created:", event);
-      }
-    );
+    // Extract stream ID from the response
+    const streamId = streamResponse.effects?.created?.[0]?.reference?.objectId;
+    if (!streamId) {
+      throw new Error("Failed to get stream ID from response");
+    }
+    console.log("Stream ID:", streamId);
 
     // Update stream data
-    await suiPulse.updateStream(
-      stream.effects?.created?.[0].reference.objectId || '',
-      new TextEncoder().encode("Hello, World!")
-    );
+    await suiPulse.updateStream(streamId, new Uint8Array([4, 5, 6]));
+    console.log("Stream data updated successfully");
 
     // Create a snapshot
-    await suiPulse.createSnapshot(
-      stream.effects?.created?.[0].reference.objectId || '',
-      { metadata: "Initial snapshot" }
-    );
-
-    // Batch create streams
-    const batchResult = await suiPulse.createStreamsBatch({
-      streams: [
-        {
-          name: "Batch Stream 1",
-          description: "First batch stream",
-          isPublic: true
-        },
-        {
-          name: "Batch Stream 2",
-          description: "Second batch stream",
-          isPublic: true
-        }
-      ],
-      options: {
-        parallel: true
-      }
+    const snapshotResponse = await suiPulse.createSnapshot(streamId, {
+      metadata: "Test snapshot",
     });
-    console.log("Batch creation results:", batchResult);
+    console.log("Snapshot created:", snapshotResponse);
 
-    // Clean up
-    subscription.unsubscribe();
+    // Get stream data
+    const streamData = await suiPulse.getDataStream(streamId);
+    console.log("Stream data:", streamData);
+
     suiPulse.cleanup();
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
+// Run example
 main().catch(console.error);

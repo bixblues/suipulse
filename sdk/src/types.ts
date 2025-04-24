@@ -77,6 +77,15 @@ export interface StreamsComposedEvent extends SuiEvent {
 }
 
 // Configuration Types
+export interface SuiPulseConfig {
+  packageId: string;
+  network?: "mainnet" | "testnet" | "devnet" | "localnet";
+  endpoints?: {
+    fullnode?: string;
+    websocket?: string;
+  };
+}
+
 export interface StreamConfig {
   name: string;
   description: string;
