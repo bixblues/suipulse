@@ -1,5 +1,6 @@
 "use client";
 import "@/styles/globals.css";
+import "@/styles/mdx.css";
 import { Inter } from "next/font/google";
 import { RootLayout } from "@/components/layout/root-layout";
 import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";

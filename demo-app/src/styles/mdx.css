@@ -1,0 +1,93 @@
+/* Base styles for MDX content */
+.mdx {
+  @apply max-w-3xl mx-auto px-4;
+}
+
+/* Typography */
+.mdx h1 {
+  @apply text-4xl font-bold text-slate-900 dark:text-slate-100 mb-8 mt-2 scroll-m-20 tracking-tight lg:text-5xl;
+}
+
+.mdx h2 {
+  @apply text-3xl font-semibold text-slate-900 dark:text-slate-100 mt-10 mb-4 scroll-m-20 tracking-tight;
+}
+
+.mdx h3 {
+  @apply text-2xl font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4 scroll-m-20 tracking-tight;
+}
+
+.mdx h4 {
+  @apply text-xl font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3 scroll-m-20 tracking-tight;
+}
+
+.mdx p {
+  @apply text-slate-600 dark:text-slate-400 leading-7 [&:not(:first-child)]:mt-6;
+}
+
+/* Lists */
+.mdx ul {
+  @apply my-6 ml-6 list-disc space-y-2 text-slate-600 dark:text-slate-400;
+}
+
+.mdx ol {
+  @apply my-6 ml-6 list-decimal space-y-2 text-slate-600 dark:text-slate-400;
+}
+
+.mdx li {
+  @apply mt-2;
+}
+
+/* Blockquotes */
+.mdx blockquote {
+  @apply mt-6 border-l-4 border-slate-300 pl-6 italic text-slate-800 dark:text-slate-200;
+}
+
+/* Inline code */
+.mdx :not(pre) > code {
+  @apply relative rounded bg-slate-100 px-[0.3rem] py-[0.2rem] font-mono text-sm text-slate-900 dark:bg-slate-800 dark:text-slate-100;
+}
+
+/* Code blocks */
+.mdx pre {
+  @apply mt-6 mb-4 overflow-x-auto rounded-lg bg-slate-900 p-4 dark:bg-slate-800;
+}
+
+/* Links */
+.mdx a {
+  @apply text-blue-600 dark:text-blue-400 hover:underline;
+}
+
+/* Tables */
+.mdx table {
+  @apply w-full my-6 border-collapse text-sm;
+}
+
+.mdx th {
+  @apply border border-slate-300 dark:border-slate-700 px-4 py-2 text-left font-semibold bg-slate-100 dark:bg-slate-800;
+}
+
+.mdx td {
+  @apply border border-slate-300 dark:border-slate-700 px-4 py-2;
+}
+
+/* Images */
+.mdx img {
+  @apply rounded-lg my-6 max-w-full;
+}
+
+/* Horizontal rule */
+.mdx hr {
+  @apply my-8 border-slate-200 dark:border-slate-800;
+}
+
+/* Heading anchor links */
+.mdx .anchor {
+  @apply ml-2 text-slate-400 opacity-0 transition-opacity hover:text-slate-900;
+}
+
+.mdx h1:hover .anchor,
+.mdx h2:hover .anchor,
+.mdx h3:hover .anchor,
+.mdx h4:hover .anchor {
+  @apply opacity-100;
+}

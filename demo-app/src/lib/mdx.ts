@@ -1,6 +1,8 @@
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypePrism from "@mapbox/rehype-prism";
 import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import { components } from "@/components/mdx/mdx-components";
 
 export async function getMdxContent(filePath: string) {
@@ -16,7 +18,7 @@ export async function getMdxContent(filePath: string) {
       parseFrontmatter: true,
       mdxOptions: {
         remarkPlugins: [remarkGfm],
-        rehypePlugins: [rehypePrism],
+        rehypePlugins: [rehypePrism, rehypeSlug, [rehypeAutolinkHeadings]],
       },
     },
     components,
