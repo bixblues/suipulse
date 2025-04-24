@@ -1,0 +1,127 @@
+# Stream Management
+
+This guide covers how to manage data streams using the SuiPulse SDK.
+
+## Creating Streams
+
+### Basic Stream Creation
+
+```typescript
+const stream = await client.createStream({
+  name: "temperature-data",
+  description: "Temperature readings from sensors",
+});
+```
+
+### Stream with Initial Data
+
+```typescript
+const stream = await client.createStream({
+  name: "temperature-data",
+  description: "Temperature readings from sensors",
+  initialData: {
+    temperature: 20,
+    humidity: 50,
+  },
+});
+```
+
+## Updating Streams
+
+### Single Update
+
+```typescript
+await client.updateStream(stream.id, {
+  temperature: 22.5,
+  humidity: 55,
+});
+```
+
+### Batch Updates
+
+```typescript
+await client.batchUpdateStream(stream.id, [
+  { temperature: 22.5, humidity: 55, timestamp: Date.now() },
+  { temperature: 23.0, humidity: 54, timestamp: Date.now() + 1000 },
+]);
+```
+
+## Reading Stream Data
+
+### Get Current State
+
+```typescript
+const data = await client.getStreamData(stream.id);
+console.log(data);
+```
+
+### Get Historical Data
+
+```typescript
+const history = await client.getStreamHistory(stream.id, {
+  startTime: "2024-01-01",
+  endTime: "2024-01-31",
+  limit: 100,
+});
+```
+
+## Stream Configuration
+
+### Update Stream Settings
+
+```typescript
+await client.updateStreamSettings(stream.id, {
+  name: "new-name",
+  description: "updated description",
+  retention: "30d",
+});
+```
+
+### Configure Access Control
+
+```typescript
+await client.updateStreamPermissions(stream.id, {
+  readAccess: "public",
+  writeAccess: "private",
+  authorizedWriters: ["0x123..."],
+});
+```
+
+## Stream Lifecycle
+
+### Delete Stream
+
+```typescript
+await client.deleteStream(stream.id);
+```
+
+### Archive Stream
+
+```typescript
+await client.archiveStream(stream.id);
+```
+
+## Best Practices
+
+1. **Data Structure**
+
+   - Keep data structures consistent
+   - Include timestamps with updates
+   - Consider data size limits
+
+2. **Update Strategy**
+
+   - Use batch updates for high-frequency data
+   - Implement retry logic
+   - Handle conflicts appropriately
+
+3. **Performance**
+   - Monitor stream size
+   - Implement data retention policies
+   - Use appropriate access patterns
+
+## Next Steps
+
+- Learn about [Event Handling](/docs/sdk/event-handling)
+- Explore [Client Setup](/docs/sdk/client-setup)
+- Check out [Core Concepts](/docs/core-concepts/data-streams)

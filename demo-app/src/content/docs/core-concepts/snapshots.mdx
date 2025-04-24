@@ -1,0 +1,111 @@
+# Snapshots
+
+Snapshots in SuiPulse provide efficient state management and historical data access. They allow you to capture and restore stream states at specific points in time.
+
+## Creating Snapshots
+
+### Automatic Snapshots
+
+Configure automatic snapshots based on time or event triggers.
+
+```typescript
+await client.configureSnapshots(stream.id, {
+  frequency: "daily",
+  retention: "30d",
+});
+```
+
+### Manual Snapshots
+
+Create snapshots on demand.
+
+```typescript
+const snapshot = await client.createSnapshot(stream.id, {
+  name: "pre-update-state",
+  description: "State before major update",
+});
+```
+
+## Retrieving Snapshots
+
+### Latest Snapshot
+
+```typescript
+const latest = await client.getLatestSnapshot(stream.id);
+```
+
+### Historical Snapshots
+
+```typescript
+const snapshots = await client.getSnapshots(stream.id, {
+  startTime: "2024-01-01",
+  endTime: "2024-01-31",
+});
+```
+
+## Working with Snapshots
+
+### Restoring from Snapshot
+
+```typescript
+await client.restoreFromSnapshot(stream.id, snapshot.id);
+```
+
+### Comparing Snapshots
+
+```typescript
+const diff = await client.compareSnapshots(
+  stream.id,
+  snapshot1.id,
+  snapshot2.id
+);
+```
+
+## Advanced Features
+
+### Snapshot Transformations
+
+```typescript
+const transformed = await client.transformSnapshot(snapshot.id, {
+  filter: { temperature: { $gt: 20 } },
+  sort: { timestamp: -1 },
+});
+```
+
+### Snapshot Verification
+
+```typescript
+const isValid = await client.verifySnapshot(snapshot.id);
+```
+
+## Best Practices
+
+1. **Snapshot Frequency**
+
+   - Balance storage costs with recovery needs
+   - Consider data change rate
+   - Plan for peak usage periods
+
+2. **Data Optimization**
+
+   - Compress large snapshots
+   - Remove unnecessary data
+   - Use incremental snapshots
+
+3. **Error Handling**
+   - Verify snapshot integrity
+   - Implement rollback strategies
+   - Monitor snapshot health
+
+## Use Cases
+
+- State recovery
+- Data analysis
+- Audit trails
+- Version control
+
+## Next Steps
+
+- Learn about [Data Streams](/docs/core-concepts/data-streams)
+- Explore [Access Control](/docs/core-concepts/access-control)
+- Check out [Analytics](/docs/core-concepts/analytics)

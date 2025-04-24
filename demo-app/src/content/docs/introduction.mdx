@@ -1,0 +1,69 @@
+# Introduction to SuiPulse
+
+Welcome to SuiPulse, a powerful data streaming platform built on the Sui blockchain. SuiPulse enables real-time data streaming, efficient state management, and secure access control for decentralized applications.
+
+## Key Features
+
+### Real-time Data Streaming
+
+Stream data in real-time with automatic synchronization across clients. Perfect for DeFi applications, IoT networks, and social platforms.
+
+### Efficient State Management
+
+Leverage our snapshot system to efficiently manage and retrieve historical data states, reducing on-chain storage costs while maintaining data integrity.
+
+### Secure Access Control
+
+Implement fine-grained access control with role-based permissions, ensuring your data streams are accessible only to authorized participants.
+
+## Getting Started
+
+To start using SuiPulse in your project:
+
+```bash
+npm install @suipulse/sdk
+```
+
+Initialize the client:
+
+```typescript
+import { SuiPulseClient } from "@suipulse/sdk";
+
+const client = new SuiPulseClient({
+  network: "devnet",
+});
+```
+
+## Core Concepts
+
+### Data Streams
+
+The fundamental building blocks of SuiPulse, enabling real-time data synchronization and state management.
+
+### Snapshots
+
+Efficient state management system for capturing and restoring stream states at specific points in time.
+
+### Access Control
+
+Flexible permission system for securing your data streams and controlling access.
+
+### Analytics
+
+Powerful monitoring and analysis tools for tracking stream performance and usage patterns.
+
+## Use Cases
+
+- DeFi applications
+- IoT networks
+- Social platforms
+- Enterprise solutions
+- Gaming applications
+
+## Next Steps
+
+- Follow our [Quick Start](/docs/quick-start) guide
+- Learn about [Data Streams](/docs/core-concepts/data-streams)
+- Explore [Access Control](/docs/core-concepts/access-control)
+- Check out [Snapshots](/docs/core-concepts/snapshots)
+- Discover [Analytics](/docs/core-concepts/analytics)

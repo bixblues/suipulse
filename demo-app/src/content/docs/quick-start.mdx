@@ -1,0 +1,71 @@
+# Quick Start Guide
+
+This guide will help you get started with SuiPulse by walking through a simple example of creating and managing a data stream.
+
+## Prerequisites
+
+- Node.js 16 or later
+- npm or yarn
+- Basic familiarity with Sui blockchain
+
+## Installation
+
+Install the SuiPulse SDK:
+
+```bash
+npm install @suipulse/sdk
+```
+
+## Basic Usage
+
+### 1. Initialize the Client
+
+```typescript
+import { SuiPulseClient } from "@suipulse/sdk";
+
+const client = new SuiPulseClient({
+  network: "devnet",
+  // Optional: provide your wallet for authenticated operations
+  wallet: wallet,
+});
+```
+
+### 2. Create a Data Stream
+
+```typescript
+const stream = await client.createStream({
+  name: "my-first-stream",
+  description: "A simple example stream",
+});
+
+console.log("Stream created:", stream.id);
+```
+
+### 3. Update Stream Data
+
+```typescript
+await client.updateStream(stream.id, {
+  temperature: 25.5,
+  humidity: 60,
+  timestamp: Date.now(),
+});
+```
+
+### 4. Subscribe to Updates
+
+```typescript
+const unsubscribe = await client.subscribeToStream(stream.id, (data) => {
+  console.log("New data:", data);
+});
+
+// Later: stop listening for updates
+unsubscribe();
+```
+
+## Next Steps
+
+Now that you've created your first stream, you can:
+
+- Learn about [Data Streams](/docs/core-concepts/data-streams) in detail
+- Explore [Snapshots](/docs/core-concepts/snapshots) for state management
+- Set up [Access Control](/docs/core-concepts/access-control) for your streams

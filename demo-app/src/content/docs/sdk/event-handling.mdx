@@ -1,0 +1,153 @@
+# Event Handling
+
+This guide covers how to handle events and real-time updates in SuiPulse.
+
+## Subscribing to Events
+
+### Basic Subscription
+
+```typescript
+const unsubscribe = await client.subscribeToStream(stream.id, (data) => {
+  console.log("Stream updated:", data);
+});
+
+// Later: stop listening for updates
+unsubscribe();
+```
+
+### Filtered Subscription
+
+```typescript
+const unsubscribe = await client.subscribeToStream(
+  stream.id,
+  (data) => {
+    console.log("Stream updated:", data);
+  },
+  {
+    filter: { temperature: { $gt: 20 } },
+  }
+);
+```
+
+## Event Types
+
+### Stream Events
+
+```typescript
+client.on("stream:created", (event) => {
+  console.log("New stream created:", event.streamId);
+});
+
+client.on("stream:updated", (event) => {
+  console.log("Stream updated:", event.streamId, event.data);
+});
+
+client.on("stream:deleted", (event) => {
+  console.log("Stream deleted:", event.streamId);
+});
+```
+
+### System Events
+
+```typescript
+client.on("error", (error) => {
+  console.error("SuiPulse error:", error);
+});
+
+client.on("connected", () => {
+  console.log("Connected to SuiPulse");
+});
+
+client.on("disconnected", () => {
+  console.log("Disconnected from SuiPulse");
+});
+```
+
+## Error Handling
+
+### Event Error Handling
+
+```typescript
+const unsubscribe = await client.subscribeToStream(
+  stream.id,
+  (data) => {
+    console.log("Stream updated:", data);
+  },
+  {
+    onError: (error) => {
+      console.error("Subscription error:", error);
+      // Implement retry logic
+    },
+  }
+);
+```
+
+### Reconnection Strategy
+
+```typescript
+const unsubscribe = await client.subscribeToStream(
+  stream.id,
+  (data) => {
+    console.log("Stream updated:", data);
+  },
+  {
+    reconnect: {
+      maxRetries: 3,
+      retryDelay: 1000,
+    },
+  }
+);
+```
+
+## Best Practices
+
+1. **Event Management**
+
+   - Clean up subscriptions when no longer needed
+   - Handle connection state changes
+   - Implement proper error handling
+
+2. **Performance**
+
+   - Use appropriate event filters
+   - Batch process events when possible
+   - Monitor event queue size
+
+3. **Reliability**
+   - Implement retry mechanisms
+   - Handle network interruptions
+   - Use appropriate timeouts
+
+## Example: Real-time Dashboard
+
+```typescript
+class StreamDashboard {
+  private subscriptions: Map<string, () => void> = new Map();
+
+  async addStream(streamId: string) {
+    const unsubscribe = await client.subscribeToStream(streamId, (data) => {
+      this.updateDashboard(streamId, data);
+    });
+    this.subscriptions.set(streamId, unsubscribe);
+  }
+
+  removeStream(streamId: string) {
+    const unsubscribe = this.subscriptions.get(streamId);
+    if (unsubscribe) {
+      unsubscribe();
+      this.subscriptions.delete(streamId);
+    }
+  }
+
+  cleanup() {
+    this.subscriptions.forEach((unsubscribe) => unsubscribe());
+    this.subscriptions.clear();
+  }
+}
+```
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Client Setup](/docs/sdk/client-setup)
+- Check out [Core Concepts](/docs/core-concepts/data-streams)

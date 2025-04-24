@@ -1,0 +1,125 @@
+# Data Streams
+
+Data streams are the core building blocks of SuiPulse. They provide a real-time, append-only log of data that can be used to track changes, synchronize state, and build event-driven applications.
+
+## Stream Structure
+
+A data stream consists of:
+
+- **Stream ID**: A unique identifier for the stream
+- **Name**: A human-readable name for the stream
+- **Description**: Optional description of the stream's purpose
+- **Owner**: The address that created the stream
+- **Data**: The current state of the stream
+- **Version**: An incrementing counter for tracking updates
+- **Timestamp**: When the stream was last updated
+
+## Creating Streams
+
+### Basic Creation
+
+```typescript
+const stream = await client.createStream({
+  name: "sensor-data",
+  description: "Temperature and humidity readings",
+});
+```
+
+### With Initial Data
+
+```typescript
+const stream = await client.createStream({
+  name: "sensor-data",
+  description: "Temperature and humidity readings",
+  initialData: {
+    temperature: 20,
+    humidity: 50,
+  },
+});
+```
+
+## Updating Streams
+
+### Single Update
+
+```typescript
+await client.updateStream(stream.id, {
+  temperature: 22.5,
+  humidity: 55,
+});
+```
+
+### Batch Updates
+
+```typescript
+await client.batchUpdateStream(stream.id, [
+  { temperature: 22.5, humidity: 55, timestamp: Date.now() },
+  { temperature: 23.0, humidity: 54, timestamp: Date.now() + 1000 },
+]);
+```
+
+## Reading Stream Data
+
+### Get Current State
+
+```typescript
+const data = await client.getStreamData(stream.id);
+console.log(data);
+```
+
+### Subscribe to Updates
+
+```typescript
+const unsubscribe = await client.subscribeToStream(stream.id, (data) => {
+  console.log("Stream updated:", data);
+});
+```
+
+## Access Control
+
+Streams can be configured with different access levels:
+
+- **Public**: Anyone can read the stream
+- **Private**: Only authorized addresses can read/write
+- **Write-restricted**: Anyone can read, but only authorized addresses can write
+
+```typescript
+await client.updateStreamPermissions(stream.id, {
+  readAccess: "public",
+  writeAccess: "private",
+  authorizedWriters: ["0x123..."],
+});
+```
+
+## Best Practices
+
+1. **Data Structure**
+
+   - Keep data structures consistent within a stream
+   - Include timestamps with updates
+   - Consider data size limits
+
+2. **Update Frequency**
+
+   - Balance update frequency with network load
+   - Use batch updates for high-frequency data
+   - Consider using snapshots for historical data
+
+3. **Error Handling**
+   - Implement retry logic for failed updates
+   - Monitor stream health
+   - Handle network disconnections gracefully
+
+## Common Use Cases
+
+- Real-time sensor data
+- Application state synchronization
+- Event logs and audit trails
+- Collaborative applications
+- IoT device monitoring
+
+## Next Steps
+
+- Learn about [Snapshots](/docs/core-concepts/snapshots) for efficient state management
+- Explore [Access Control](/docs/core-concepts/access-control) in detail
+- Check out [Analytics](/docs/core-concepts/analytics) for monitoring your streams

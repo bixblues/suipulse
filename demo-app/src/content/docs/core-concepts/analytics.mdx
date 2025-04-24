@@ -1,0 +1,129 @@
+# Analytics
+
+SuiPulse provides powerful analytics capabilities to monitor and analyze your data streams. Track usage patterns, identify trends, and optimize your application's performance.
+
+## Stream Metrics
+
+### Basic Metrics
+
+```typescript
+const metrics = await client.getStreamMetrics(stream.id, {
+  startTime: "2024-01-01",
+  endTime: "2024-01-31",
+});
+
+console.log({
+  updateCount: metrics.updates,
+  averageSize: metrics.avgSize,
+  peakUsage: metrics.peakUsage,
+});
+```
+
+### Custom Metrics
+
+```typescript
+const customMetrics = await client.getCustomMetrics(stream.id, {
+  metrics: ["temperature", "humidity"],
+  aggregation: "hourly",
+});
+```
+
+## Monitoring
+
+### Real-time Monitoring
+
+```typescript
+const unsubscribe = await client.subscribeToMetrics(stream.id, (metrics) => {
+  console.log("Current metrics:", metrics);
+});
+```
+
+### Alerts
+
+```typescript
+await client.setAlert(stream.id, {
+  metric: "temperature",
+  condition: ">",
+  value: 30,
+  action: "notify",
+});
+```
+
+## Data Analysis
+
+### Time Series Analysis
+
+```typescript
+const analysis = await client.analyzeTimeSeries(stream.id, {
+  metric: "temperature",
+  window: "1h",
+  aggregation: "avg",
+});
+```
+
+### Pattern Detection
+
+```typescript
+const patterns = await client.detectPatterns(stream.id, {
+  metric: "temperature",
+  minConfidence: 0.8,
+});
+```
+
+## Visualization
+
+### Export Data
+
+```typescript
+const csvData = await client.exportMetrics(stream.id, {
+  format: "csv",
+  metrics: ["temperature", "humidity"],
+});
+```
+
+### Integration
+
+```typescript
+const dashboard = await client.createDashboard(stream.id, {
+  name: "Temperature Monitor",
+  charts: [
+    {
+      type: "line",
+      metric: "temperature",
+      timeRange: "24h",
+    },
+  ],
+});
+```
+
+## Best Practices
+
+1. **Metric Selection**
+
+   - Focus on key performance indicators
+   - Balance detail with performance
+   - Consider storage implications
+
+2. **Monitoring Strategy**
+
+   - Set appropriate thresholds
+   - Use multiple alert channels
+   - Implement escalation policies
+
+3. **Data Retention**
+   - Define retention policies
+   - Archive historical data
+   - Optimize storage costs
+
+## Use Cases
+
+- Performance monitoring
+- Usage analytics
+- Capacity planning
+- Cost optimization
+
+## Next Steps
+
+- Learn about [Data Streams](/docs/core-concepts/data-streams)
+- Explore [Access Control](/docs/core-concepts/access-control)
+- Check out [Snapshots](/docs/core-concepts/snapshots)

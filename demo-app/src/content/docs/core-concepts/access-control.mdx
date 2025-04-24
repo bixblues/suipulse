@@ -1,0 +1,93 @@
+# Access Control
+
+SuiPulse provides flexible access control mechanisms to secure your data streams. You can configure who can read and write to your streams, ensuring data privacy and security.
+
+## Access Levels
+
+### Public Access
+
+Anyone can read the stream data.
+
+```typescript
+await client.updateStreamPermissions(stream.id, {
+  readAccess: "public",
+  writeAccess: "private",
+});
+```
+
+### Private Access
+
+Only authorized addresses can read and write.
+
+```typescript
+await client.updateStreamPermissions(stream.id, {
+  readAccess: "private",
+  writeAccess: "private",
+  authorizedReaders: ["0x123..."],
+  authorizedWriters: ["0x123..."],
+});
+```
+
+### Write-Restricted Access
+
+Anyone can read, but only authorized addresses can write.
+
+```typescript
+await client.updateStreamPermissions(stream.id, {
+  readAccess: "public",
+  writeAccess: "private",
+  authorizedWriters: ["0x123..."],
+});
+```
+
+## Managing Permissions
+
+### Adding Authorized Users
+
+```typescript
+await client.addAuthorizedUsers(stream.id, {
+  readers: ["0x456..."],
+  writers: ["0x789..."],
+});
+```
+
+### Removing Authorized Users
+
+```typescript
+await client.removeAuthorizedUsers(stream.id, {
+  readers: ["0x456..."],
+  writers: ["0x789..."],
+});
+```
+
+## Best Practices
+
+1. **Principle of Least Privilege**
+
+   - Grant only necessary permissions
+   - Regularly review access lists
+   - Remove unused permissions
+
+2. **Permission Management**
+
+   - Use role-based access control
+   - Implement permission inheritance
+   - Monitor access patterns
+
+3. **Security Considerations**
+   - Rotate authorized addresses
+   - Implement multi-signature for critical operations
+   - Use secure key management
+
+## Common Use Cases
+
+- Private data sharing
+- Multi-party collaboration
+- Enterprise data management
+- Regulatory compliance
+
+## Next Steps
+
+- Learn about [Data Streams](/docs/core-concepts/data-streams)
+- Explore [Snapshots](/docs/core-concepts/snapshots)
+- Check out [Analytics](/docs/core-concepts/analytics)
