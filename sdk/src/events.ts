@@ -2,8 +2,6 @@ import { SuiClient } from "@mysten/sui.js/client";
 import { SuiEvent, Unsubscribe } from "@mysten/sui.js/client";
 import {
   EventCallback,
-  EventSubscription,
-  EventFilters,
   DataStreamCreatedEvent,
   DataStreamUpdatedEvent,
   SnapshotCreatedEvent,
@@ -14,16 +12,16 @@ import {
 } from "./types";
 
 export enum EventType {
-  StreamCreated = "StreamCreated",
-  StreamUpdated = "StreamUpdated",
+  DataStreamCreated = "DataStreamCreated",
+  DataStreamUpdated = "DataStreamUpdated",
   SnapshotCreated = "SnapshotCreated",
   SubscriberAdded = "SubscriberAdded",
   StreamsComposed = "StreamsComposed",
 }
 
 type EventTypeMap = {
-  [EventType.StreamCreated]: DataStreamCreatedEvent;
-  [EventType.StreamUpdated]: DataStreamUpdatedEvent;
+  [EventType.DataStreamCreated]: DataStreamCreatedEvent;
+  [EventType.DataStreamUpdated]: DataStreamUpdatedEvent;
   [EventType.SnapshotCreated]: SnapshotCreatedEvent;
   [EventType.SubscriberAdded]: SubscriberAddedEvent;
   [EventType.StreamsComposed]: StreamsComposedEvent;
@@ -41,18 +39,18 @@ export class EventManager {
    * Subscribe to stream creation events
    */
   public subscribeToStreamCreation(
-    callback: EventCallback<EventTypeMap[EventType.StreamCreated]>
+    callback: EventCallback<EventTypeMap[EventType.DataStreamCreated]>
   ): () => void {
-    return this.subscribe(EventType.StreamCreated, callback);
+    return this.subscribe(EventType.DataStreamCreated, callback);
   }
 
   /**
    * Subscribe to stream update events
    */
   public subscribeToStreamUpdates(
-    callback: EventCallback<EventTypeMap[EventType.StreamUpdated]>
+    callback: EventCallback<EventTypeMap[EventType.DataStreamUpdated]>
   ): () => void {
-    return this.subscribe(EventType.StreamUpdated, callback);
+    return this.subscribe(EventType.DataStreamUpdated, callback);
   }
 
   /**

@@ -684,29 +684,17 @@ export class SuiPulse {
         stream.data.content as { fields: Record<string, unknown> }
       ).fields;
 
-      // Debug logging
-      console.log("Raw stream fields:", JSON.stringify(fields, null, 2));
-
       if (!this.validateDataStream(fields)) {
         throw new Error("Invalid data stream format");
       }
 
-      // Convert data field to Uint8Array if it's a string
+      // Convert data field to Uint8Array if it's an array
       const dataField = fields.data;
-      if (typeof dataField === "string") {
-        try {
-          const dataBytes = new Uint8Array(Buffer.from(dataField, "base64"));
-          return {
-            ...fields,
-            data: dataBytes,
-          } as unknown as DataStreamObject;
-        } catch (error) {
-          console.warn("Failed to convert data field to Uint8Array:", error);
-          return {
-            ...fields,
-            data: new Uint8Array([]),
-          } as unknown as DataStreamObject;
-        }
+      if (Array.isArray(dataField)) {
+        return {
+          ...fields,
+          data: new Uint8Array(dataField),
+        } as unknown as DataStreamObject;
       }
 
       return fields as unknown as DataStreamObject;

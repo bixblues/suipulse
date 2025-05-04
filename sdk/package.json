@@ -15,7 +15,9 @@
   },
   "dependencies": {
     "@mysten/sui.js": "^0.42.0",
-    "bech32": "^2.0.0"
+    "@types/ws": "^8.18.1",
+    "bech32": "^2.0.0",
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
