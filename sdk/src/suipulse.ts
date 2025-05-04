@@ -2,6 +2,7 @@ import {
   SuiClient,
   SuiTransactionBlockResponse,
   SuiMoveObject,
+  SuiHTTPTransport,
 } from "@mysten/sui.js/client";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
 import { Keypair } from "@mysten/sui.js/cryptography";
@@ -27,22 +28,97 @@ import {
   throwIfInvalid,
   validateData,
 } from "./validation";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+import { Network, NetworkConfig, SuiPulseConfig } from "./config";
 
+/**
+ * SuiPulse SDK - A TypeScript SDK for interacting with the SuiPulse data mesh protocol
+ *
+ * @example
+ * ```typescript
+ * import { SuiPulse, Network } from '@suipulse/sdk';
+ * import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+ *
+ * const keypair = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
+ * const suiPulse = new SuiPulse(keypair);
+ * ```
+ */
 export class SuiPulse {
   private client: SuiClient;
+  private keypair: Ed25519Keypair;
+  private config: SuiPulseConfig;
   private packageId: string;
-  private signer: Keypair;
   public events: EventManager;
 
-  constructor(client: SuiClient, packageId: string, signer: Keypair) {
-    this.client = client;
-    this.packageId = packageId;
-    this.signer = signer;
-    this.events = new EventManager(client, packageId);
+  /**
+   * Creates a new instance of the SuiPulse SDK
+   *
+   * @param keypair - The Ed25519 keypair used for signing transactions
+   * @param network - The network to connect to (defaults to TESTNET)
+   * @throws {SuiPulseError} If the keypair is invalid
+   */
+  constructor(keypair: Ed25519Keypair, network: Network = Network.TESTNET) {
+    this.config = SuiPulseConfig.getInstance();
+    this.config.setNetwork(network);
+
+    this.client = new SuiClient({
+      transport: new SuiHTTPTransport({
+        url: this.config.getUrl(),
+      }),
+    });
+
+    this.keypair = keypair;
+    this.packageId = this.config.getPackageId();
+    this.events = new EventManager(this.client, this.packageId);
+  }
+
+  /**
+   * Changes the network configuration
+   *
+   * @param network - The network to switch to
+   * @throws {SuiPulseError} If the network configuration is invalid
+   */
+  public setNetwork(network: Network): void {
+    this.config.setNetwork(network);
+    this.client = new SuiClient({
+      transport: new SuiHTTPTransport({
+        url: this.config.getUrl(),
+      }),
+    });
+  }
+
+  /**
+   * Sets a custom network configuration
+   *
+   * @param config - The custom network configuration
+   * @throws {SuiPulseError} If the configuration is invalid
+   */
+  public setCustomConfig(config: NetworkConfig): void {
+    this.config.setCustomConfig(config);
+    this.client = new SuiClient({
+      transport: new SuiHTTPTransport({
+        url: this.config.getUrl(),
+      }),
+    });
   }
 
   /**
    * Creates a new data stream
+   *
+   * @param config - The stream configuration
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the stream creation fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.createStream({
+   *   name: "My Stream",
+   *   description: "A test stream",
+   *   isPublic: true,
+   *   metadata: new Uint8Array([1, 2, 3]),
+   *   tags: ["test"]
+   * });
+   * ```
    */
   async createStream(
     config: StreamConfig
@@ -84,12 +160,12 @@ export class SuiPulse {
       });
 
       // Transfer the created stream to the signer's address
-      const signerAddress = this.signer.getPublicKey().toSuiAddress();
+      const signerAddress = this.keypair.getPublicKey().toSuiAddress();
       tx.transferObjects([result], tx.pure(signerAddress));
 
       const response = await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        signer: this.signer,
+        signer: this.keypair,
         options: {
           showEffects: true,
           showEvents: true,
@@ -147,7 +223,22 @@ export class SuiPulse {
   }
 
   /**
-   * Creates multiple streams in batch
+   * Creates multiple streams in a batch operation
+   *
+   * @param config - The batch stream configuration
+   * @returns A promise that resolves to the batch operation result
+   * @throws {SuiPulseError} If the batch operation fails
+   *
+   * @example
+   * ```typescript
+   * const result = await suiPulse.createStreamsBatch({
+   *   streams: [
+   *     { name: "Stream 1", ... },
+   *     { name: "Stream 2", ... }
+   *   ],
+   *   options: { parallel: true }
+   * });
+   * ```
    */
   async createStreamsBatch(
     config: BatchStreamConfig
@@ -212,7 +303,22 @@ export class SuiPulse {
   }
 
   /**
-   * Updates data in multiple streams
+   * Updates data in multiple streams in a batch operation
+   *
+   * @param config - The batch update configuration
+   * @returns A promise that resolves to the batch operation result
+   * @throws {SuiPulseError} If the batch operation fails
+   *
+   * @example
+   * ```typescript
+   * const result = await suiPulse.updateStreamsBatch({
+   *   updates: [
+   *     { streamId: "0x123", data: new Uint8Array([1, 2, 3]) },
+   *     { streamId: "0x456", data: new Uint8Array([4, 5, 6]) }
+   *   ],
+   *   options: { parallel: true }
+   * });
+   * ```
    */
   async updateStreamsBatch(
     config: BatchUpdateConfig
@@ -279,6 +385,18 @@ export class SuiPulse {
 
   /**
    * Creates a snapshot of a stream
+   *
+   * @param streamId - The ID of the stream to snapshot
+   * @param config - The snapshot configuration
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the snapshot creation fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.createSnapshot("0x123", {
+   *   metadata: "Snapshot metadata"
+   * });
+   * ```
    */
   async createSnapshot(
     streamId: string,
@@ -323,13 +441,13 @@ export class SuiPulse {
           });
 
           // Transfer the created snapshot to the signer's address
-          const signerAddress = this.signer.getPublicKey().toSuiAddress();
+          const signerAddress = this.keypair.getPublicKey().toSuiAddress();
           tx.transferObjects([result], tx.pure(signerAddress));
 
           // Execute the transaction immediately after getting the latest version
           return await this.client.signAndExecuteTransactionBlock({
             transactionBlock: tx,
-            signer: this.signer,
+            signer: this.keypair,
             options: {
               showEffects: true,
               showEvents: true,
@@ -370,7 +488,17 @@ export class SuiPulse {
   }
 
   /**
-   * Gets snapshot data
+   * Retrieves snapshot data
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @param options - Optional query parameters
+   * @returns A promise that resolves to the snapshot data
+   * @throws {SuiPulseError} If the snapshot retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const snapshot = await suiPulse.getSnapshotData("0x123");
+   * ```
    */
   async getSnapshotData(
     snapshotId: string,
@@ -409,6 +537,16 @@ export class SuiPulse {
 
   /**
    * Updates snapshot metadata
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @param newMetadata - The new metadata string
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the update fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.updateSnapshotMetadata("0x123", "New metadata");
+   * ```
    */
   async updateSnapshotMetadata(
     snapshotId: string,
@@ -426,7 +564,7 @@ export class SuiPulse {
 
       return await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        signer: this.signer,
+        signer: this.keypair,
         options: {
           showEffects: true,
           showEvents: true,
@@ -443,7 +581,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets stream schema
+   * Retrieves the schema of a stream
+   *
+   * @param streamId - The ID of the stream
+   * @returns A promise that resolves to the schema string or null
+   * @throws {SuiPulseError} If the schema retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const schema = await suiPulse.getStreamSchema("0x123");
+   * ```
    */
   async getStreamSchema(streamId: string): Promise<string | null> {
     try {
@@ -460,7 +607,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets stream version
+   * Retrieves the version of a stream
+   *
+   * @param streamId - The ID of the stream
+   * @returns A promise that resolves to the version string
+   * @throws {SuiPulseError} If the version retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const version = await suiPulse.getStreamVersion("0x123");
+   * ```
    */
   async getStreamVersion(streamId: string): Promise<string> {
     try {
@@ -478,9 +634,16 @@ export class SuiPulse {
 
   /**
    * Updates data in a stream
-   * @param streamId The ID of the stream to update
-   * @param data New data to add to the stream
-   * @returns Transaction response
+   *
+   * @param streamId - The ID of the stream to update
+   * @param data - The new data to add to the stream
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the update fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.updateStream("0x123", new Uint8Array([1, 2, 3]));
+   * ```
    */
   async updateStream(
     streamId: string,
@@ -497,7 +660,7 @@ export class SuiPulse {
         try {
           // Get the stream object to verify ownership
           const stream = await this.getDataStream(streamId);
-          const signerAddress = this.signer.getPublicKey().toSuiAddress();
+          const signerAddress = this.keypair.getPublicKey().toSuiAddress();
 
           if (stream.owner !== signerAddress) {
             throw new SuiPulseError(
@@ -537,7 +700,7 @@ export class SuiPulse {
 
           return await this.client.signAndExecuteTransactionBlock({
             transactionBlock: tx,
-            signer: this.signer,
+            signer: this.keypair,
             options: {
               showEffects: true,
               showEvents: true,
@@ -579,8 +742,15 @@ export class SuiPulse {
 
   /**
    * Subscribes to a stream
-   * @param streamId The ID of the stream to subscribe to
-   * @returns Transaction response
+   *
+   * @param streamId - The ID of the stream to subscribe to
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the subscription fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.subscribeToStream("0x123");
+   * ```
    */
   async subscribeToStream(
     streamId: string
@@ -594,7 +764,7 @@ export class SuiPulse {
 
     return await this.client.signAndExecuteTransactionBlock({
       transactionBlock: tx,
-      signer: this.signer,
+      signer: this.keypair,
       options: {
         showEffects: true,
         showEvents: true,
@@ -604,10 +774,17 @@ export class SuiPulse {
 
   /**
    * Adds a permission for an address to a stream
-   * @param streamId The ID of the stream
-   * @param address The address to grant permission to
-   * @param level Permission level (0: read, 1: write, 2: admin)
-   * @returns Transaction response
+   *
+   * @param streamId - The ID of the stream
+   * @param address - The address to grant permission to
+   * @param level - The permission level (0: read, 1: write, 2: admin)
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the permission addition fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.addPermission("0x123", "0x456", 1);
+   * ```
    */
   async addPermission(
     streamId: string,
@@ -623,7 +800,7 @@ export class SuiPulse {
 
     return await this.client.signAndExecuteTransactionBlock({
       transactionBlock: tx,
-      signer: this.signer,
+      signer: this.keypair,
       options: {
         showEffects: true,
         showEvents: true,
@@ -633,9 +810,16 @@ export class SuiPulse {
 
   /**
    * Composes streams by adding a child stream to a parent
-   * @param parentId The ID of the parent stream
-   * @param childId The ID of the child stream
-   * @returns Transaction response
+   *
+   * @param parentId - The ID of the parent stream
+   * @param childId - The ID of the child stream
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the composition fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.composeStreams("0x123", "0x456");
+   * ```
    */
   async composeStreams(
     parentId: string,
@@ -650,7 +834,7 @@ export class SuiPulse {
 
     return await this.client.signAndExecuteTransactionBlock({
       transactionBlock: tx,
-      signer: this.signer,
+      signer: this.keypair,
       options: {
         showEffects: true,
         showEvents: true,
@@ -659,9 +843,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets a data stream by ID
-   * @param streamId The ID of the stream
-   * @returns The data stream object
+   * Retrieves a data stream by ID
+   *
+   * @param streamId - The ID of the stream
+   * @returns A promise that resolves to the data stream object
+   * @throws {SuiPulseError} If the stream retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const stream = await suiPulse.getDataStream("0x123");
+   * ```
    */
   async getDataStream(streamId: string): Promise<DataStreamObject> {
     try {
@@ -731,9 +922,16 @@ export class SuiPulse {
 
   /**
    * Checks if an address is subscribed to a stream
-   * @param streamId The ID of the stream
-   * @param address The address to check
-   * @returns Whether the address is subscribed
+   *
+   * @param streamId - The ID of the stream
+   * @param address - The address to check
+   * @returns A promise that resolves to a boolean indicating subscription status
+   * @throws {SuiPulseError} If the check fails
+   *
+   * @example
+   * ```typescript
+   * const isSubscribed = await suiPulse.isSubscribed("0x123", "0x456");
+   * ```
    */
   async isSubscribed(streamId: string, address: string): Promise<boolean> {
     try {
@@ -751,9 +949,16 @@ export class SuiPulse {
 
   /**
    * Transfers ownership of a stream to a new address
-   * @param streamId The ID of the stream
-   * @param newOwner The address of the new owner
-   * @returns Transaction response
+   *
+   * @param streamId - The ID of the stream
+   * @param newOwner - The address of the new owner
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the transfer fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.transferOwnership("0x123", "0x456");
+   * ```
    */
   async transferOwnership(
     streamId: string,
@@ -769,7 +974,7 @@ export class SuiPulse {
 
       return await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        signer: this.signer,
+        signer: this.keypair,
         options: {
           showEffects: true,
           showEvents: true,
@@ -832,7 +1037,12 @@ export class SuiPulse {
   }
 
   /**
-   * Cleanup resources
+   * Cleans up resources and subscriptions
+   *
+   * @example
+   * ```typescript
+   * suiPulse.cleanup();
+   * ```
    */
   public cleanup(): void {
     this.events.cleanup();
@@ -840,6 +1050,16 @@ export class SuiPulse {
 
   /**
    * Transfers a snapshot to a new owner
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @param recipient - The address of the recipient
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the transfer fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.transferSnapshot("0x123", "0x456");
+   * ```
    */
   async transferSnapshot(
     snapshotId: string,
@@ -857,7 +1077,7 @@ export class SuiPulse {
 
       return await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        signer: this.signer,
+        signer: this.keypair,
         options: {
           showEffects: true,
           showEvents: true,
@@ -875,6 +1095,16 @@ export class SuiPulse {
 
   /**
    * Updates a snapshot with new data
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @param newData - The new data to update the snapshot with
+   * @returns A promise that resolves to the transaction response
+   * @throws {SuiPulseError} If the update fails
+   *
+   * @example
+   * ```typescript
+   * const response = await suiPulse.updateSnapshot("0x123", new Uint8Array([1, 2, 3]));
+   * ```
    */
   async updateSnapshot(
     snapshotId: string,
@@ -890,7 +1120,7 @@ export class SuiPulse {
 
       return await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        signer: this.signer,
+        signer: this.keypair,
         options: {
           showEffects: true,
           showEvents: true,
@@ -907,7 +1137,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets the creator address of a snapshot
+   * Retrieves the creator address of a snapshot
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @returns A promise that resolves to the creator's address
+   * @throws {SuiPulseError} If the retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const creator = await suiPulse.getSnapshotCreator("0x123");
+   * ```
    */
   async getSnapshotCreator(snapshotId: string): Promise<string> {
     try {
@@ -924,7 +1163,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets the timestamp when the snapshot was created
+   * Retrieves the timestamp when the snapshot was created
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @returns A promise that resolves to the timestamp string
+   * @throws {SuiPulseError} If the retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const timestamp = await suiPulse.getSnapshotTimestamp("0x123");
+   * ```
    */
   async getSnapshotTimestamp(snapshotId: string): Promise<string> {
     try {
@@ -941,7 +1189,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets the version of the stream when the snapshot was taken
+   * Retrieves the version of the stream when the snapshot was taken
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @returns A promise that resolves to the version string
+   * @throws {SuiPulseError} If the retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const version = await suiPulse.getSnapshotVersion("0x123");
+   * ```
    */
   async getSnapshotVersion(snapshotId: string): Promise<string> {
     try {
@@ -959,6 +1216,16 @@ export class SuiPulse {
 
   /**
    * Verifies if a snapshot belongs to a specific stream
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @param streamId - The ID of the stream
+   * @returns A promise that resolves to a boolean indicating verification status
+   * @throws {SuiPulseError} If the verification fails
+   *
+   * @example
+   * ```typescript
+   * const isValid = await suiPulse.verifySnapshotStream("0x123", "0x456");
+   * ```
    */
   async verifySnapshotStream(
     snapshotId: string,
@@ -974,7 +1241,7 @@ export class SuiPulse {
 
       const response = await this.client.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        signer: this.signer,
+        signer: this.keypair,
         options: {
           showEffects: true,
           showEvents: true,
@@ -994,7 +1261,16 @@ export class SuiPulse {
   }
 
   /**
-   * Gets the stream ID associated with a snapshot
+   * Retrieves the stream ID associated with a snapshot
+   *
+   * @param snapshotId - The ID of the snapshot
+   * @returns A promise that resolves to the stream ID
+   * @throws {SuiPulseError} If the retrieval fails
+   *
+   * @example
+   * ```typescript
+   * const streamId = await suiPulse.getSnapshotStreamId("0x123");
+   * ```
    */
   async getSnapshotStreamId(snapshotId: string): Promise<string> {
     try {

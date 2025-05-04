@@ -1,30 +1,13 @@
 import { SuiClient, SuiHTTPTransport } from "@mysten/sui.js/client";
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
-import { SuiPulse } from "../src";
+import { SuiPulse, SuiPulseConfig } from "../src";
 
-const NETWORKS = {
-  mainnet: {
-    packageId: "0x...", // Replace with mainnet package ID
-    url: "https://fullnode.mainnet.sui.io:443",
-  },
-  testnet: {
-    packageId:
-      "0x94d890a5677922d1f2e51724ba9439a422235bc8e8de0ad7d8b4e06827c8d750",
-    url: "https://fullnode.testnet.sui.io:443",
-  },
-  devnet: {
-    packageId: "0x...", // Replace with devnet package ID
-    url: "https://fullnode.devnet.sui.io:443",
-  },
-} as const;
-
-const NETWORK = "testnet";
-const network = NETWORKS[NETWORK];
+const config = SuiPulseConfig.getInstance().getConfig();
 
 // Initialize the client
 const client = new SuiClient({
   transport: new SuiHTTPTransport({
-    url: network.url,
+    url: config.url,
   }),
 });
 
@@ -86,7 +69,17 @@ async function main() {
       Buffer.from(privateKey, "hex")
     );
 
-    const suiPulse = new SuiPulse(client, network.packageId, keypair);
+    // Initialize with testnet (default)
+    const suiPulse = new SuiPulse(keypair);
+
+    // You can also specify a different network
+    // const suiPulse = new SuiPulse(keypair, undefined, Network.MAINNET);
+
+    // Or use a custom configuration
+    // suiPulse.setCustomConfig({
+    //   packageId: "0xYOUR_CUSTOM_PACKAGE_ID",
+    //   url: "https://your-custom-node-url"
+    // });
 
     // Create a stream to trigger events
     console.log("\n=== Creating a New Stream ===");
@@ -106,9 +99,9 @@ async function main() {
 
     // Start polling for events in the background
     console.log("\n=== Starting Event Polling ===");
-    pollEvents(client, network.packageId, streamId, suiPulse);
+    pollEvents(client, config.packageId, streamId, suiPulse);
 
-    // Update stream data to trigger events version 1
+    // Update stream data to trigger events
     console.log("\n=== Updating Stream Data ===");
     await suiPulse.updateStream(streamId, new Uint8Array([4, 5, 6]));
 
@@ -119,6 +112,7 @@ async function main() {
 
     // Keep the script running to receive events
     console.log("\n=== Waiting for Events (Press Ctrl+C to exit) ===");
+    await new Promise(() => {});
   } catch (error) {
     console.error("Error in event handling example:", error);
     process.exit(1);

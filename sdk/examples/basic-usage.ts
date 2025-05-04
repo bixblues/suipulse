@@ -1,29 +1,8 @@
-import { SuiClient } from "@mysten/sui.js/client";
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 import { SuiPulse } from "../src";
 
-// Network configurations
-const NETWORKS = {
-  mainnet: {
-    packageId: "0x...", // Mainnet package ID
-    fullnode: "https://fullnode.mainnet.sui.io:443",
-  },
-  testnet: {
-    packageId:
-      "0x94d890a5677922d1f2e51724ba9439a422235bc8e8de0ad7d8b4e06827c8d750", // Your testnet package ID
-    fullnode: "https://fullnode.testnet.sui.io:443",
-  },
-};
-
 async function main() {
   try {
-    // Initialize with testnet configuration
-    const network = "testnet";
-    const config = NETWORKS[network];
-
-    // Create Sui client
-    const client = new SuiClient({ url: config.fullnode });
-
     // Import keypair from private key (replace with your private key)
     const privateKey =
       "53cf1d0167e860510c638241bcee690085432af368a44871b20673d46b4f3af7"; // Replace with your private key
@@ -32,7 +11,7 @@ async function main() {
     );
 
     // Initialize SuiPulse SDK
-    const suiPulse = new SuiPulse(client, config.packageId, keypair);
+    const suiPulse = new SuiPulse(keypair);
 
     // Create a new data stream
     console.log("Creating a new data stream...");

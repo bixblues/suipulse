@@ -1,18 +1,6 @@
 import { SuiClient } from "@mysten/sui.js/client";
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
-import { SuiPulse } from "../src";
-
-const NETWORKS = {
-  mainnet: {
-    packageId: "0x...", // Replace with mainnet package ID
-    fullnode: "https://fullnode.mainnet.sui.io:443",
-  },
-  testnet: {
-    packageId:
-      "0x94d890a5677922d1f2e51724ba9439a422235bc8e8de0ad7d8b4e06827c8d750",
-    fullnode: "https://fullnode.testnet.sui.io:443",
-  },
-};
+import { SuiPulse, SuiPulseConfig } from "../src";
 
 // Helper function to wait for a specified time
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -41,11 +29,10 @@ async function retryOperation<T>(
 async function main() {
   try {
     // Initialize SDK with testnet configuration
-    const network = "testnet";
-    const config = NETWORKS[network];
+    const config = SuiPulseConfig.getInstance().getConfig();
 
     // Create Sui client
-    const client = new SuiClient({ url: config.fullnode });
+    const client = new SuiClient({ url: config.url });
 
     // Import keypair from private key (replace with your private key)
     const privateKey =
@@ -55,7 +42,7 @@ async function main() {
     );
 
     // Initialize SuiPulse SDK
-    const suiPulse = new SuiPulse(client, config.packageId, keypair);
+    const suiPulse = new SuiPulse(keypair);
 
     // Example 1: Create multiple streams in batch
     console.log("\n=== Creating Multiple Streams in Batch ===");

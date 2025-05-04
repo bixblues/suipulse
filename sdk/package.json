@@ -4,6 +4,12 @@
   "description": "SDK for SuiPulse - A Sui Native Decentralized Data Mesh",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest",
@@ -11,7 +17,33 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run test && npm run lint",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suioverflow2025/suipulse.git"
+  },
+  "keywords": [
+    "sui",
+    "blockchain",
+    "data",
+    "mesh",
+    "sdk"
+  ],
+  "author": "SuiPulse Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/suioverflow2025/suipulse/issues"
+  },
+  "homepage": "https://github.com/suioverflow2025/suipulse#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@mysten/sui.js": "^0.42.0",
@@ -28,14 +60,5 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
-  },
-  "keywords": [
-    "sui",
-    "blockchain",
-    "data",
-    "mesh",
-    "sdk"
-  ],
-  "author": "SuiPulse Team",
-  "license": "MIT"
+  }
 }
