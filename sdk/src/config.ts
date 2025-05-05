@@ -12,7 +12,8 @@ export interface NetworkConfig {
 
 export const DEFAULT_NETWORKS: Record<Network, NetworkConfig> = {
   [Network.MAINNET]: {
-    packageId: "0x...", // Replace with mainnet package ID when available
+    packageId:
+      "0x8627c085955b40ab04f04696f1e2dd34d8de30c4a9421447f6af268f2f7c93f6",
     url: "https://fullnode.mainnet.sui.io:443",
   },
   [Network.TESTNET]: {

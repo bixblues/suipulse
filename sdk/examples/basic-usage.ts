@@ -1,5 +1,5 @@
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
-import { SuiPulse } from "../src";
+import { Network, SuiPulse } from "../src";
 
 async function main() {
   try {
@@ -11,7 +11,7 @@ async function main() {
     );
 
     // Initialize SuiPulse SDK
-    const suiPulse = new SuiPulse(keypair);
+    const suiPulse = new SuiPulse(keypair, Network.MAINNET);
 
     // Create a new data stream
     console.log("Creating a new data stream...");
