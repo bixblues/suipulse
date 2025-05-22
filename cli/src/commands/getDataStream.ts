@@ -1,4 +1,4 @@
-import { SuiPulse } from "@suipulse/sdk";
+import { Network, SuiPulse } from "@suipulse/sdk";
 import { getActiveSuiKeypair } from "../utils";
 
 export async function getDataStream(
@@ -6,7 +6,7 @@ export async function getDataStream(
   network: string
 ): Promise<void> {
   const keypair = getActiveSuiKeypair();
-  const suiPulse = new SuiPulse(keypair, network as any);
+  const suiPulse = new SuiPulse(keypair, network as Network);
 
   try {
     const stream = await suiPulse.getDataStream(streamId);

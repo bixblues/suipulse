@@ -1,7 +1,13 @@
-import { Network, SuiPulse, SuiPulseConfig } from "@suipulse/sdk";
+import { Network, SuiPulse } from "@suipulse/sdk";
 import chalk from "chalk";
 import ora from "ora";
 import { getActiveSuiKeypair } from "../utils";
+
+interface SnapshotCreatedEvent {
+  parsedJson: {
+    snapshot_id: string;
+  };
+}
 
 export async function createSnapshot(
   streamId: string,
@@ -27,13 +33,13 @@ export async function createSnapshot(
     const snapshotCreatedEvent = result.events?.find(
       (event) =>
         event.type === `${suiPulse.packageId}::storage::SnapshotCreated`
-    );
+    ) as SnapshotCreatedEvent | undefined;
 
     if (!snapshotCreatedEvent) {
       throw new Error("Snapshot created event not found");
     }
 
-    const snapshotId = (snapshotCreatedEvent as any).parsedJson.snapshot_id;
+    const snapshotId = snapshotCreatedEvent.parsedJson.snapshot_id;
 
     spinner.succeed(chalk.green("Snapshot created successfully!"));
     console.log(chalk.blue("\nSnapshot Details:"));

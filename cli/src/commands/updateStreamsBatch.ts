@@ -4,6 +4,15 @@ import chalk from "chalk";
 import ora from "ora";
 import { getActiveSuiKeypair } from "../utils";
 
+interface StreamUpdate {
+  streamId: string;
+  data: string | Uint8Array;
+}
+
+interface BatchUpdateConfig {
+  updates: StreamUpdate[];
+}
+
 export async function updateStreamsBatch(
   configPath: string,
   parallel: boolean = false,
@@ -13,7 +22,9 @@ export async function updateStreamsBatch(
 
   try {
     // Read batch configuration file
-    const config = JSON.parse(readFileSync(configPath, "utf-8"));
+    const config = JSON.parse(
+      readFileSync(configPath, "utf-8")
+    ) as BatchUpdateConfig;
 
     // Get keypair from Sui CLI active account
     const keypair = getActiveSuiKeypair();
@@ -25,9 +36,12 @@ export async function updateStreamsBatch(
 
     // Update streams in batch using SDK
     const result = await suiPulse.updateStreamsBatch({
-      updates: config.updates.map((update: any) => ({
+      updates: config.updates.map((update: StreamUpdate) => ({
         streamId: update.streamId,
-        data: new Uint8Array(update.data),
+        data:
+          typeof update.data === "string"
+            ? new Uint8Array(Buffer.from(update.data, "utf-8"))
+            : update.data,
       })),
       options: { parallel },
     });

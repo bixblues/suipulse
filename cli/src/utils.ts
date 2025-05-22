@@ -5,6 +5,11 @@ import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 import { fromB64 } from "@mysten/sui.js/utils";
 import chalk from "chalk";
 
+interface SuiConfig {
+  active_address: string;
+  [key: string]: unknown;
+}
+
 /**
  * Reads the Sui CLI config and keystore to get the active Ed25519Keypair.
  * Throws if the config or key is missing.
@@ -17,10 +22,10 @@ export function getActiveSuiKeypair(): Ed25519Keypair {
   console.log(chalk.blue("Reading keystore from:"), keystorePath);
 
   // Read and parse the config file
-  let config: any;
+  let config: SuiConfig;
   try {
     const configContent = readFileSync(configPath, "utf-8");
-    config = yaml.load(configContent);
+    config = yaml.load(configContent) as SuiConfig;
     console.log(chalk.green("Successfully loaded config"));
   } catch (err) {
     throw new Error(`Failed to read Sui CLI config at ${configPath}`);

@@ -1,9 +1,19 @@
 import { readFileSync } from "fs";
-import { Network, SuiPulse, SuiPulseConfig } from "@suipulse/sdk";
+import { Network, SuiPulse } from "@suipulse/sdk";
 import { SuiClient } from "@mysten/sui.js/client";
 import chalk from "chalk";
 import ora from "ora";
 import { getActiveSuiKeypair } from "../utils";
+
+interface StreamConfig {
+  name: string;
+  description: string;
+  metadata: string | Uint8Array;
+}
+
+interface BatchConfig {
+  streams: StreamConfig[];
+}
 
 export async function createStreamsBatch(
   configPath: string,
@@ -14,10 +24,10 @@ export async function createStreamsBatch(
 
   try {
     // Read batch configuration file
-    const config = JSON.parse(readFileSync(configPath, "utf-8"));
+    const config = JSON.parse(readFileSync(configPath, "utf-8")) as BatchConfig;
 
     // Convert metadata to Uint8Array if it's a string
-    const processedStreams = config.streams.map((stream: any) => {
+    const processedStreams = config.streams.map((stream: StreamConfig) => {
       if (typeof stream.metadata === "string") {
         return {
           ...stream,
@@ -57,12 +67,12 @@ export async function createStreamsBatch(
 
     // Get stream IDs from successful creations
     const signerAddress = keypair.getPublicKey().toSuiAddress();
-    // Initialize SDK with network configuration
-    SuiPulseConfig.getInstance().setNetwork(network as Network);
-    const suiConfig = SuiPulseConfig.getInstance().getConfig();
-
-    // Create Sui client
-    const client = new SuiClient({ url: suiConfig.url });
+    const client = new SuiClient({
+      url:
+        network === "mainnet"
+          ? "https://fullnode.mainnet.sui.io"
+          : "https://fullnode.testnet.sui.io",
+    });
     const streams = await client.getOwnedObjects({
       owner: signerAddress,
       options: {
@@ -76,7 +86,10 @@ export async function createStreamsBatch(
         if (!obj.data?.content || obj.data.content.dataType !== "moveObject") {
           return false;
         }
-        const fields = (obj.data.content as any).fields;
+        const fields = obj.data.content.fields as {
+          name: string;
+          description: string;
+        };
         return (
           fields.name === streamConfig.name &&
           fields.description === streamConfig.description

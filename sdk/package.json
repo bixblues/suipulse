@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/suioverflow2025/suipulse.git"
+    "url": "git+https://github.com/bixblues/suipulse/sdk"
   },
   "keywords": [
     "sui",
@@ -40,9 +40,9 @@
   "author": "SuiPulse Team",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/suioverflow2025/suipulse/issues"
+    "url": "https://github.com/bixblues/suipulse/issues"
   },
-  "homepage": "https://github.com/suioverflow2025/suipulse#readme",
+  "homepage": "https://github.com/bixblues/suipulse#readme",
   "engines": {
     "node": ">=16.0.0"
   },
