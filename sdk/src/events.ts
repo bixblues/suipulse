@@ -42,7 +42,7 @@ type EventTypeMap = {
  * SubscriptionInfo - Tracks subscription state
  */
 interface SubscriptionInfo {
-  callback: EventCallback<any>;
+  callback: (event: unknown) => void;
   cursor: string | null;
   lastProcessedTimestamp: number;
 }
@@ -61,9 +61,7 @@ export class EventManager {
    * @param client - The SuiClient instance to use for event polling
    * @param packageId - The package ID of the SuiPulse contract
    */
-  constructor(private client: SuiClient, private packageId: string) {
-    console.log("EventManager initialized with polling");
-  }
+  constructor(private client: SuiClient, private packageId: string) {}
 
   /**
    * Subscribes to stream creation events
@@ -130,7 +128,7 @@ export class EventManager {
     }
 
     const subscriptionInfo: SubscriptionInfo = {
-      callback,
+      callback: callback as (event: unknown) => void,
       cursor: null,
       lastProcessedTimestamp: Date.now(),
     };
@@ -157,8 +155,6 @@ export class EventManager {
       return;
     }
 
-    console.log(`Starting polling for ${eventType}...`);
-
     const interval = setInterval(async () => {
       try {
         const subscriptions = this.subscriptions.get(eventType);
@@ -167,7 +163,6 @@ export class EventManager {
         for (const subscription of subscriptions) {
           const events = await this.fetchEvents(eventType, subscription.cursor);
           if (events.data.length > 0) {
-            console.log(`Received ${events.data.length} ${eventType} events`);
             this.processEvents(eventType, events.data, subscription);
 
             // Update cursor to the latest event
@@ -191,7 +186,6 @@ export class EventManager {
     if (interval) {
       clearInterval(interval);
       this.pollingIntervals.delete(eventType);
-      console.log(`Stopped polling for ${eventType}`);
     }
   }
 
@@ -285,28 +279,29 @@ export class EventManager {
     }
   }
 
-  private transformEventData(eventType: EventType, data: any): any {
+  private transformEventData(eventType: EventType, data: unknown): unknown {
+    const d = data as Record<string, unknown>;
     switch (eventType) {
       case EventType.DataStreamUpdated:
         return {
-          stream_id: data.stream_id,
-          timestamp: data.timestamp,
+          stream_id: d.stream_id,
+          timestamp: d.timestamp,
         };
       case EventType.DataStreamCreated:
         return {
-          stream_id: data.stream_id,
-          name: data.name,
-          owner: data.owner,
+          stream_id: d.stream_id,
+          name: d.name,
+          owner: d.owner,
         };
       case EventType.SubscriberAdded:
         return {
-          stream_id: data.stream_id,
-          subscriber: data.subscriber,
+          stream_id: d.stream_id,
+          subscriber: d.subscriber,
         };
       case EventType.StreamsComposed:
         return {
-          parent_stream_id: data.parent_stream_id,
-          child_stream_id: data.child_stream_id,
+          parent_stream_id: d.parent_stream_id,
+          child_stream_id: d.child_stream_id,
         };
       default:
         return data;

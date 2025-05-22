@@ -123,14 +123,12 @@ export function validateBatchSize(
   };
 }
 
-export function validateData(data: Uint8Array): ValidationResult {
+export function validateData(data: unknown): ValidationResult {
   const errors: string[] = [];
 
   if (!(data instanceof Uint8Array)) {
     errors.push("Data must be a Uint8Array");
-  }
-
-  if (data.length === 0) {
+  } else if (data.length === 0) {
     errors.push("Data cannot be empty");
   }
 
@@ -141,11 +139,16 @@ export function validateData(data: Uint8Array): ValidationResult {
 }
 
 export function validateSnapshotData(
-  data: Record<string, any>
+  data: Record<string, unknown>
 ): ValidationResult {
   const errors: string[] = [];
 
-  if (!data.id?.id || typeof data.id.id !== "string") {
+  if (
+    !data.id ||
+    typeof data.id !== "object" ||
+    !("id" in data.id) ||
+    typeof data.id.id !== "string"
+  ) {
     errors.push("Invalid snapshot ID format");
   }
 

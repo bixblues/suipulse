@@ -13,7 +13,6 @@ import {
   BatchStreamConfig,
   BatchUpdateConfig,
   BatchOperationResult,
-  SnapshotQueryOptions,
   SuiPulseError,
   SuiPulseErrorType,
 } from "./types";
@@ -490,7 +489,6 @@ export class SuiPulse {
    * Retrieves snapshot data
    *
    * @param snapshotId - The ID of the snapshot
-   * @param options - Optional query parameters
    * @returns A promise that resolves to the snapshot data
    * @throws {SuiPulseError} If the snapshot retrieval fails
    *
@@ -499,10 +497,7 @@ export class SuiPulse {
    * const snapshot = await suiPulse.getSnapshotData("0x123");
    * ```
    */
-  async getSnapshotData(
-    snapshotId: string,
-    options?: SnapshotQueryOptions
-  ): Promise<StreamSnapshot> {
+  async getSnapshotData(snapshotId: string): Promise<StreamSnapshot> {
     try {
       throwIfInvalid(validateStreamId(snapshotId));
 
@@ -989,19 +984,19 @@ export class SuiPulse {
     }
   }
 
-  private validateSnapshotData(data: Record<string, any>): boolean {
+  private validateSnapshotData(data: Record<string, unknown>): boolean {
+    const d = data as { [key: string]: unknown };
     try {
-      const streamIdValue = data.streamId || data.stream_id;
       return (
         typeof data === "object" &&
         data !== null &&
-        data.id?.id &&
-        typeof streamIdValue === "string" &&
-        Array.isArray(data.data) &&
-        typeof data.timestamp === "string" &&
-        typeof data.version === "string" &&
-        typeof data.metadata === "string" &&
-        typeof data.creator === "string"
+        "id" in d &&
+        ("streamId" in d || "stream_id" in d) &&
+        "data" in d &&
+        "timestamp" in d &&
+        "version" in d &&
+        "metadata" in d &&
+        "creator" in d
       );
     } catch {
       return false;
@@ -1016,10 +1011,21 @@ export class SuiPulse {
       );
     }
 
-    const fields = content.fields as Record<string, any>;
-
-    // Support both stream_id and streamId
-    const streamId = fields.streamId || fields.stream_id || "";
+    const fields = content.fields as Record<string, unknown>;
+    // Type guards
+    const id = typeof fields.id === "string" ? fields.id : "";
+    const streamId =
+      typeof fields.streamId === "string"
+        ? fields.streamId
+        : typeof fields.stream_id === "string"
+        ? fields.stream_id
+        : "";
+    const data = Array.isArray(fields.data) ? fields.data : [];
+    const timestamp =
+      typeof fields.timestamp === "string" ? fields.timestamp : "";
+    const version = typeof fields.version === "string" ? fields.version : "";
+    const metadata = typeof fields.metadata === "string" ? fields.metadata : "";
+    const creator = typeof fields.creator === "string" ? fields.creator : "";
 
     if (!this.validateSnapshotData({ ...fields, streamId })) {
       throw new SuiPulseError(
@@ -1029,13 +1035,13 @@ export class SuiPulse {
     }
 
     return {
-      id: fields.id || "",
+      id,
       streamId,
-      data: new Uint8Array(fields.data || []),
-      timestamp: fields.timestamp?.toString() || "0",
-      version: fields.version?.toString() || "0",
-      metadata: fields.metadata || "",
-      creator: fields.creator || "",
+      data: new Uint8Array(data),
+      timestamp,
+      version,
+      metadata,
+      creator,
     };
   }
 
