@@ -9,6 +9,7 @@ interface StreamConfig {
   name: string;
   description: string;
   metadata: string | Uint8Array;
+  isPublic: boolean;
 }
 
 interface BatchConfig {
@@ -26,16 +27,14 @@ export async function createStreamsBatch(
     // Read batch configuration file
     const config = JSON.parse(readFileSync(configPath, "utf-8")) as BatchConfig;
 
-    // Convert metadata to Uint8Array if it's a string
-    const processedStreams = config.streams.map((stream: StreamConfig) => {
-      if (typeof stream.metadata === "string") {
-        return {
-          ...stream,
-          metadata: new Uint8Array(Buffer.from(stream.metadata, "utf-8")),
-        };
-      }
-      return stream;
-    });
+    // Convert metadata to Uint8Array for all streams
+    const processedStreams = config.streams.map((stream: StreamConfig) => ({
+      ...stream,
+      metadata:
+        typeof stream.metadata === "string"
+          ? new Uint8Array(Buffer.from(stream.metadata, "utf-8"))
+          : stream.metadata,
+    }));
 
     // Get keypair from Sui CLI active account
     const keypair = getActiveSuiKeypair();
