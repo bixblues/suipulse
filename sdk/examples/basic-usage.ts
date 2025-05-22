@@ -5,7 +5,7 @@ async function main() {
   try {
     // Import keypair from private key (replace with your private key)
     const privateKey =
-      "53cf1d0167e860510c638241bcee690085432af368a44871b20673d46b4f3af7"; // Replace with your private key
+      "53cf1d0167e860510c638241bc...."; // Replace with your private key
     const keypair = Ed25519Keypair.fromSecretKey(
       Buffer.from(privateKey, "hex")
     );

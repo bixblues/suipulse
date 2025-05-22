@@ -77,9 +77,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Built with ❤️ for the Sui ecosystem
-
----
-
-<p align="center">
-  Made with ❤️ by Krishna Mahato for Sui Overflow Hackathon 2025
-</p>
