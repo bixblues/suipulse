@@ -1,6 +1,6 @@
 {
   "name": "@suipulse/cli",
-  "version": "0.1.5-cliv1",
+  "version": "0.1.6-cliv1",
   "description": "CLI tool for SuiPulse SDK",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
