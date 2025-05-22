@@ -1,6 +1,6 @@
 {
   "name": "@suipulse/sdk",
-  "version": "0.1.0-sdkv1",
+  "version": "0.1.1-sdkv1",
   "description": "SDK for SuiPulse - A Sui Native Decentralized Data Mesh",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
