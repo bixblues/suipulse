@@ -1,5 +1,5 @@
 import { Hero } from "@/components/landing/Hero";
-import { Community } from "@/components/landing/Community";
+// import { Community } from "@/components/landing/Community";
 
 export default function Home() {
   return (
