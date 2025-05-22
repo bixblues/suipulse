@@ -9,34 +9,33 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { LogoWithText } from "@/components/ui/LogoWithText";
 
-const components: { title: string; href: string; description: string }[] = [
-  {
-    title: "DeFi Oracle",
-    href: "/demos/defi-oracle",
-    description:
-      "Multi-protocol price feed aggregation with real-time updates.",
-  },
-  {
-    title: "Sensor Network",
-    href: "/demos/sensor-network",
-    description: "IoT-style data streams with batch updates and monitoring.",
-  },
-  {
-    title: "Social Feed",
-    href: "/demos/social-feed",
-    description: "Public and private data feeds with subscription management.",
-  },
-  {
-    title: "Analytics",
-    href: "/demos/analytics",
-    description: "Comprehensive analytics dashboard for stream performance.",
-  },
-];
+// const components: { title: string; href: string; description: string }[] = [
+//   {
+//     title: "DeFi Oracle",
+//     href: "/demos/defi-oracle",
+//     description:
+//       "Multi-protocol price feed aggregation with real-time updates.",
+//   },
+//   {
+//     title: "Sensor Network",
+//     href: "/demos/sensor-network",
+//     description: "IoT-style data streams with batch updates and monitoring.",
+//   },
+//   {
+//     title: "Social Feed",
+//     href: "/demos/social-feed",
+//     description: "Public and private data feeds with subscription management.",
+//   },
+//   {
+//     title: "Analytics",
+//     href: "/demos/analytics",
+//     description: "Comprehensive analytics dashboard for stream performance.",
+//   },
+// ];
 
 const Navbar = () => {
   return (
