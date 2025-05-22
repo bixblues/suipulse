@@ -34,6 +34,7 @@ import { transferSnapshot } from "./commands/transferSnapshot";
 import { getSnapshotStreamId } from "./commands/getSnapshotStreamId";
 import { setNetwork } from "./commands/setNetwork";
 import { setCustomConfig } from "./commands/setCustomConfig";
+import { version } from "../package.json";
 
 const program = new Command();
 
@@ -192,7 +193,7 @@ program
         "Use 'suipulse <command> --help' for more information about a command."
     )
   )
-  .version("0.1.0")
+  .version(version)
   .option("--network <network>", "Network to use (mainnet/testnet)", "mainnet");
 
 // Stream commands
