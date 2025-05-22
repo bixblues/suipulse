@@ -5,9 +5,9 @@ export default function Home() {
   return (
     <main className="relative">
       <Hero />
-      <div className="container relative z-10">
+      {/* <div className="container relative z-10">
         <Community />
-      </div>
+      </div> */}
     </main>
   );
 }

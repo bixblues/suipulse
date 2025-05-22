@@ -70,13 +70,13 @@ const Navbar = () => {
                   <ListItem href="/docs/quick-start" title="Quick Start">
                     Get started with SuiPulse in under 5 minutes.
                   </ListItem>
-                  <ListItem href="/docs/examples" title="Examples">
-                    View example projects and implementations.
+                  <ListItem href="/docs/cli" title="SuiPulse CLI Tool">
+                    Comprehensive guide to SuiPulse CLI tools and commands.
                   </ListItem>
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            <NavigationMenuItem>
+            {/* <NavigationMenuItem>
               <NavigationMenuTrigger>Demos</NavigationMenuTrigger>
               <NavigationMenuContent>
                 <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
@@ -91,15 +91,15 @@ const Navbar = () => {
                   ))}
                 </ul>
               </NavigationMenuContent>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
+            </NavigationMenuItem> */}
+            {/* <NavigationMenuItem>
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
                 href="/playground"
               >
                 Playground
               </NavigationMenuLink>
-            </NavigationMenuItem>
+            </NavigationMenuItem> */}
           </NavigationMenuList>
         </NavigationMenu>
         <div className="ml-auto flex items-center gap-4">
