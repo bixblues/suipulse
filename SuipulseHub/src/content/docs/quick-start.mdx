@@ -21,42 +21,49 @@ npm install @suipulse/sdk
 ### 1. Initialize the Client
 
 ```typescript
-import { SuiPulseClient } from "@suipulse/sdk";
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 
-const client = new SuiPulseClient({
-  network: "devnet",
-  // Optional: provide your wallet for authenticated operations
-  wallet: wallet,
-});
+// Create a keypair
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+
+// Initialize SuiPulse
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
 ```
 
 ### 2. Create a Data Stream
 
 ```typescript
-const stream = await client.createStream({
+const result = await suiPulse.createStream({
   name: "my-first-stream",
   description: "A simple example stream",
+  metadata: new Uint8Array(Buffer.from("Initial metadata")),
+  isPublic: true,
 });
 
-console.log("Stream created:", stream.id);
+const streamId = result.streamId;
+console.log("Stream created:", streamId);
 ```
 
 ### 3. Update Stream Data
 
 ```typescript
-await client.updateStream(stream.id, {
-  temperature: 25.5,
-  humidity: 60,
-  timestamp: Date.now(),
+await suiPulse.updateStream(streamId, {
+  data: new Uint8Array(Buffer.from("Updated stream data")),
 });
 ```
 
 ### 4. Subscribe to Updates
 
 ```typescript
-const unsubscribe = await client.subscribeToStream(stream.id, (data) => {
-  console.log("New data:", data);
-});
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "StreamUpdated",
+  (event) => {
+    if (event.parsedJson.stream_id === streamId) {
+      console.log("Stream updated:", event);
+    }
+  }
+);
 
 // Later: stop listening for updates
 unsubscribe();

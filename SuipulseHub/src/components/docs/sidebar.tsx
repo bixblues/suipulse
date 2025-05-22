@@ -17,6 +17,18 @@ const sidebarItems = {
     { title: "Client Setup", href: "/docs/sdk/client-setup" },
     { title: "Stream Management", href: "/docs/sdk/stream-management" },
     { title: "Event Handling", href: "/docs/sdk/event-handling" },
+    { title: "Stream Composition", href: "/docs/sdk/stream-composition" },
+    {
+      title: "Subscription Management",
+      href: "/docs/sdk/subscription-management",
+    },
+    { title: "Batch Operations", href: "/docs/sdk/batch-operations" },
+    { title: "Network Configuration", href: "/docs/sdk/network-configuration" },
+    { title: "Snapshot Management", href: "/docs/sdk/snapshot-management" },
+    { title: "Snapshot Transfer", href: "/docs/sdk/snapshot-transfer" },
+    { title: "Ownership Transfer", href: "/docs/sdk/ownership-transfer" },
+    { title: "Error Handling", href: "/docs/sdk/error-handling" },
+    { title: "Validation", href: "/docs/sdk/validation" },
   ],
 };
 

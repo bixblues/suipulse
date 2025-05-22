@@ -1,106 +1,102 @@
 # Snapshots
 
-Snapshots in SuiPulse provide efficient state management and historical data access. They allow you to capture and restore stream states at specific points in time.
+Snapshots in SuiPulse provide an efficient way to capture and manage stream states at specific points in time.
+
+## Overview
+
+A snapshot is a point-in-time capture of a stream's state, including:
+
+- Current data
+- Metadata
+- Version information
+- Creation timestamp
 
 ## Creating Snapshots
 
-### Automatic Snapshots
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 
-Configure automatic snapshots based on time or event triggers.
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Create a snapshot
+const result = await suiPulse.createSnapshot(streamId, {
+  metadata: "Snapshot metadata",
+});
+
+// Get snapshot ID from the event
+const snapshotId = result.events.find(
+  (event) => event.type === `${suiPulse.packageId}::storage::SnapshotCreated`
+)?.parsedJson.snapshot_id;
+```
+
+## Managing Snapshots
+
+### Update Snapshot
 
 ```typescript
-await client.configureSnapshots(stream.id, {
-  frequency: "daily",
-  retention: "30d",
+await suiPulse.updateSnapshot(snapshotId, {
+  data: new Uint8Array(Buffer.from("Updated snapshot data")),
 });
 ```
 
-### Manual Snapshots
-
-Create snapshots on demand.
+### Transfer Snapshot
 
 ```typescript
-const snapshot = await client.createSnapshot(stream.id, {
-  name: "pre-update-state",
-  description: "State before major update",
-});
+await suiPulse.transferSnapshot(snapshotId, recipientAddress);
 ```
 
-## Retrieving Snapshots
-
-### Latest Snapshot
+### Get Snapshot Data
 
 ```typescript
-const latest = await client.getLatestSnapshot(stream.id);
+const snapshotData = await suiPulse.getSnapshotData(snapshotId);
+console.log("Snapshot data:", snapshotData);
 ```
 
-### Historical Snapshots
+### Get Snapshot Stream ID
 
 ```typescript
-const snapshots = await client.getSnapshots(stream.id, {
-  startTime: "2024-01-01",
-  endTime: "2024-01-31",
-});
+const streamId = await suiPulse.getSnapshotStreamId(snapshotId);
 ```
 
-## Working with Snapshots
-
-### Restoring from Snapshot
+## Snapshot Events
 
 ```typescript
-await client.restoreFromSnapshot(stream.id, snapshot.id);
-```
-
-### Comparing Snapshots
-
-```typescript
-const diff = await client.compareSnapshots(
-  stream.id,
-  snapshot1.id,
-  snapshot2.id
+// Subscribe to snapshot creation events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "SnapshotCreated",
+  (event) => {
+    console.log("New snapshot created:", event.parsedJson.snapshot_id);
+  }
 );
-```
-
-## Advanced Features
-
-### Snapshot Transformations
-
-```typescript
-const transformed = await client.transformSnapshot(snapshot.id, {
-  filter: { temperature: { $gt: 20 } },
-  sort: { timestamp: -1 },
-});
-```
-
-### Snapshot Verification
-
-```typescript
-const isValid = await client.verifySnapshot(snapshot.id);
 ```
 
 ## Best Practices
 
 1. **Snapshot Frequency**
 
-   - Balance storage costs with recovery needs
-   - Consider data change rate
-   - Plan for peak usage periods
+   - Create snapshots at meaningful state changes
+   - Consider storage costs
+   - Plan for data retention
 
-2. **Data Optimization**
+2. **Data Management**
 
-   - Compress large snapshots
-   - Remove unnecessary data
-   - Use incremental snapshots
+   - Keep snapshot metadata concise
+   - Use appropriate data formats
+   - Handle large data efficiently
 
-3. **Error Handling**
-   - Verify snapshot integrity
-   - Implement rollback strategies
-   - Monitor snapshot health
+3. **Access Control**
+   - Set appropriate permissions
+   - Monitor snapshot access
+   - Implement proper transfer controls
 
 ## Use Cases
 
-- State recovery
-- Data analysis
+- State rollback
+- Data backup
+- Historical analysis
 - Audit trails
 - Version control
 

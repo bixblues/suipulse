@@ -27,11 +27,14 @@ npm install @suipulse/sdk
 Initialize the client:
 
 ```typescript
-import { SuiPulseClient } from "@suipulse/sdk";
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 
-const client = new SuiPulseClient({
-  network: "devnet",
-});
+// Create a keypair
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+
+// Initialize SuiPulse
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
 ```
 
 ## Core Concepts

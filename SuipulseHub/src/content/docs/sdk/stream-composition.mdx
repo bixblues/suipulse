@@ -1,0 +1,68 @@
+# Stream Composition
+
+Stream composition allows you to create hierarchical relationships between streams, enabling complex data structures and relationships.
+
+## Overview
+
+Stream composition enables:
+- Parent-child relationships between streams
+- Hierarchical data structures
+- Data inheritance and relationships
+- Complex stream topologies
+
+## Composing Streams
+
+### Basic Composition
+
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Create parent-child relationship
+await suiPulse.composeStreams(parentStreamId, childStreamId);
+```
+
+### Working with Composed Streams
+
+```typescript
+// Get parent streams of a stream
+const parentStreams = await suiPulse.getParentStreams(streamId);
+
+// Get child streams of a stream
+const childStreams = await suiPulse.getChildStreams(streamId);
+```
+
+## Best Practices
+
+1. **Structure Design**
+   - Plan stream hierarchy carefully
+   - Consider data dependencies
+   - Design for scalability
+
+2. **Performance**
+   - Minimize deep nesting
+   - Consider update propagation
+   - Monitor relationship complexity
+
+3. **Access Control**
+   - Manage permissions at each level
+   - Consider inheritance rules
+   - Implement proper validation
+
+## Use Cases
+
+- Hierarchical data models
+- Complex data relationships
+- Data inheritance
+- Multi-level access control
+- Composite data structures
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Access Control](/docs/sdk/access-control)
+- Check out [Event Handling](/docs/sdk/event-handling) 

@@ -1,0 +1,87 @@
+# Ownership Transfer
+
+Ownership transfer in SuiPulse allows you to transfer ownership of streams and snapshots to other addresses.
+
+## Overview
+
+Ownership transfer enables:
+
+- Transferring stream ownership
+- Transferring snapshot ownership
+- Managing ownership permissions
+- Verifying ownership changes
+
+## Transferring Stream Ownership
+
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Transfer stream ownership
+const response = await suiPulse.transferStreamOwnership(
+  "0x123...", // stream ID
+  "0x456..." // new owner address
+);
+```
+
+## Transferring Snapshot Ownership
+
+```typescript
+// Transfer snapshot ownership
+const response = await suiPulse.transferSnapshot(
+  "0x123...", // snapshot ID
+  "0x456..." // new owner address
+);
+```
+
+## Ownership Verification
+
+```typescript
+// Get stream owner
+const stream = await suiPulse.getDataStream("0x123...");
+console.log("Stream owner:", stream.owner);
+
+// Get snapshot owner
+const snapshot = await suiPulse.getSnapshotData("0x123...");
+console.log("Snapshot owner:", snapshot.owner);
+```
+
+## Best Practices
+
+1. **Security**
+
+   - Verify recipient address
+   - Confirm ownership before transfer
+   - Use secure channels for transfer
+   - Implement proper access control
+
+2. **Transaction Management**
+
+   - Handle transfer failures
+   - Verify transfer success
+   - Monitor ownership changes
+   - Maintain transfer logs
+
+3. **Access Control**
+   - Update permissions after transfer
+   - Notify relevant parties
+   - Update access lists
+   - Handle permission inheritance
+
+## Use Cases
+
+- Asset transfer
+- Business ownership changes
+- Access control updates
+- Permission management
+- Organizational restructuring
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Access Control](/docs/sdk/access-control)
+- Check out [Event Handling](/docs/sdk/event-handling)

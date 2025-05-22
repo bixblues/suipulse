@@ -1,41 +1,36 @@
 # Data Streams
 
-Data streams are the core building blocks of SuiPulse. They provide a real-time, append-only log of data that can be used to track changes, synchronize state, and build event-driven applications.
+Data streams are the fundamental building blocks of SuiPulse, enabling real-time data synchronization and state management on the Sui blockchain.
 
-## Stream Structure
+## Overview
 
-A data stream consists of:
+A data stream in SuiPulse is a sequence of data points that can be updated in real-time and synchronized across multiple clients. Each stream has:
 
-- **Stream ID**: A unique identifier for the stream
-- **Name**: A human-readable name for the stream
-- **Description**: Optional description of the stream's purpose
-- **Owner**: The address that created the stream
-- **Data**: The current state of the stream
-- **Version**: An incrementing counter for tracking updates
-- **Timestamp**: When the stream was last updated
+- A unique identifier
+- Metadata (name, description, custom fields)
+- Current data state
+- Version history
+- Access control settings
 
 ## Creating Streams
 
-### Basic Creation
-
 ```typescript
-const stream = await client.createStream({
-  name: "sensor-data",
-  description: "Temperature and humidity readings",
-});
-```
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 
-### With Initial Data
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
 
-```typescript
-const stream = await client.createStream({
-  name: "sensor-data",
-  description: "Temperature and humidity readings",
-  initialData: {
-    temperature: 20,
-    humidity: 50,
-  },
+// Create a stream
+const result = await suiPulse.createStream({
+  name: "My Stream",
+  description: "A test data stream",
+  metadata: new Uint8Array(Buffer.from("Initial metadata")),
+  isPublic: true,
 });
+
+const streamId = result.streamId;
 ```
 
 ## Updating Streams
@@ -43,83 +38,86 @@ const stream = await client.createStream({
 ### Single Update
 
 ```typescript
-await client.updateStream(stream.id, {
-  temperature: 22.5,
-  humidity: 55,
+await suiPulse.updateStream(streamId, {
+  data: new Uint8Array(Buffer.from("Updated stream data")),
 });
 ```
 
 ### Batch Updates
 
 ```typescript
-await client.batchUpdateStream(stream.id, [
-  { temperature: 22.5, humidity: 55, timestamp: Date.now() },
-  { temperature: 23.0, humidity: 54, timestamp: Date.now() + 1000 },
-]);
+const result = await suiPulse.updateStreamsBatch({
+  updates: [
+    {
+      streamId: "0x123...",
+      data: new Uint8Array(Buffer.from("Update 1")),
+    },
+    {
+      streamId: "0x456...",
+      data: new Uint8Array(Buffer.from("Update 2")),
+    },
+  ],
+  options: { parallel: true },
+});
 ```
 
 ## Reading Stream Data
 
-### Get Current State
-
 ```typescript
-const data = await client.getStreamData(stream.id);
-console.log(data);
+const streamData = await suiPulse.getDataStream(streamId);
+console.log("Stream data:", streamData);
 ```
 
-### Subscribe to Updates
+## Stream Composition
+
+Streams can be composed to create hierarchical relationships:
 
 ```typescript
-const unsubscribe = await client.subscribeToStream(stream.id, (data) => {
-  console.log("Stream updated:", data);
-});
+// Create parent-child relationship
+await suiPulse.composeStreams(parentStreamId, childStreamId);
 ```
 
 ## Access Control
 
-Streams can be configured with different access levels:
-
-- **Public**: Anyone can read the stream
-- **Private**: Only authorized addresses can read/write
-- **Write-restricted**: Anyone can read, but only authorized addresses can write
+Streams can be public or private, with fine-grained permission control:
 
 ```typescript
-await client.updateStreamPermissions(stream.id, {
-  readAccess: "public",
-  writeAccess: "private",
-  authorizedWriters: ["0x123..."],
-});
+// Add permission for an address
+await suiPulse.addPermission(streamId, address, permissionLevel);
+
+// Check if an address is subscribed
+const isSubscribed = await suiPulse.isSubscribed(streamId, address);
 ```
 
 ## Best Practices
 
 1. **Data Structure**
 
-   - Keep data structures consistent within a stream
-   - Include timestamps with updates
-   - Consider data size limits
+   - Use consistent data formats
+   - Keep metadata concise
+   - Plan for future extensibility
 
-2. **Update Frequency**
+2. **Performance**
 
-   - Balance update frequency with network load
-   - Use batch updates for high-frequency data
-   - Consider using snapshots for historical data
+   - Use batch operations for multiple updates
+   - Implement proper error handling
+   - Monitor stream size and growth
 
-3. **Error Handling**
-   - Implement retry logic for failed updates
-   - Monitor stream health
-   - Handle network disconnections gracefully
+3. **Security**
+   - Set appropriate access controls
+   - Validate input data
+   - Handle sensitive data securely
 
-## Common Use Cases
+## Use Cases
 
-- Real-time sensor data
-- Application state synchronization
-- Event logs and audit trails
-- Collaborative applications
+- Real-time data synchronization
 - IoT device monitoring
+- DeFi price feeds
+- Social media feeds
+- Gaming state management
 
 ## Next Steps
 
-- Learn about [Snapshots](/docs/core-concepts/snapshots) for efficient state management
-- Explore [Access Control](/docs/core-concepts/access-control) in detail
-- Check out [Analytics](/docs/core-concepts/analytics) for monitoring your streams
+- Learn about [Snapshots](/docs/core-concepts/snapshots)
+- Explore [Access Control](/docs/core-concepts/access-control)
+- Check out [Analytics](/docs/core-concepts/analytics)

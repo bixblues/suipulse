@@ -1,0 +1,114 @@
+# Batch Operations
+
+Batch operations in SuiPulse allow you to perform multiple stream operations efficiently in a single transaction.
+
+## Overview
+
+Batch operations enable:
+
+- Creating multiple streams
+- Updating multiple streams
+- Parallel processing
+- Efficient resource usage
+
+## Creating Multiple Streams
+
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Create multiple streams in batch
+const result = await suiPulse.createStreamsBatch({
+  streams: [
+    {
+      name: "Stream 1",
+      description: "First stream",
+      metadata: new Uint8Array(Buffer.from("Metadata 1")),
+      isPublic: true,
+    },
+    {
+      name: "Stream 2",
+      description: "Second stream",
+      metadata: new Uint8Array(Buffer.from("Metadata 2")),
+      isPublic: false,
+    },
+  ],
+  options: { parallel: true },
+});
+```
+
+## Updating Multiple Streams
+
+```typescript
+// Update multiple streams in batch
+const result = await suiPulse.updateStreamsBatch({
+  updates: [
+    {
+      streamId: "0x123...",
+      data: new Uint8Array(Buffer.from("Update 1")),
+    },
+    {
+      streamId: "0x456...",
+      data: new Uint8Array(Buffer.from("Update 2")),
+    },
+  ],
+  options: { parallel: true },
+});
+
+// Check results
+console.log("Total updates:", result.summary.total);
+console.log("Successful:", result.summary.succeeded);
+console.log("Failed:", result.summary.failed);
+```
+
+## Batch Operation Options
+
+```typescript
+interface BatchOptions {
+  // Whether to perform operations in parallel
+  parallel?: boolean;
+
+  // Number of retry attempts for failed operations
+  retryCount?: number;
+
+  // Delay between retries in milliseconds
+  retryDelay?: number;
+}
+```
+
+## Best Practices
+
+1. **Performance**
+
+   - Use parallel processing when possible
+   - Monitor batch sizes
+   - Handle partial failures
+
+2. **Error Handling**
+
+   - Implement retry mechanisms
+   - Handle partial successes
+   - Monitor operation results
+
+3. **Resource Management**
+   - Consider network limits
+   - Monitor gas usage
+   - Optimize batch sizes
+
+## Use Cases
+
+- Bulk data operations
+- System initialization
+- Data migration
+- Batch updates
+- Resource optimization
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Event Handling](/docs/sdk/event-handling)
+- Check out [Access Control](/docs/sdk/access-control)

@@ -1,0 +1,109 @@
+# Validation
+
+Validation in SuiPulse ensures data integrity and proper configuration before performing operations.
+
+## Overview
+
+Validation enables:
+
+- Stream configuration validation
+- Snapshot configuration validation
+- Stream ID validation
+- Address validation
+- Batch size validation
+- Data validation
+
+## Validation Functions
+
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Validate stream configuration
+const streamConfig = {
+  name: "My Stream",
+  description: "A test stream",
+  isPublic: true,
+  metadata: new Uint8Array([1, 2, 3]),
+};
+
+// Validate snapshot configuration
+const snapshotConfig = {
+  metadata: "Snapshot metadata",
+};
+
+// Validate stream ID
+const streamId = "0x123...";
+
+// Validate address
+const address = "0x456...";
+
+// Validate batch size
+const batchSize = 10;
+```
+
+## Validation Rules
+
+1. **Stream Configuration**
+
+   - Name must be non-empty
+   - Description must be non-empty
+   - Metadata must be valid
+   - Tags must be valid
+
+2. **Snapshot Configuration**
+
+   - Metadata must be non-empty
+   - Stream ID must be valid
+   - Version must be valid
+
+3. **Address Validation**
+
+   - Must be valid Sui address format
+   - Must be non-empty
+   - Must be properly formatted
+
+4. **Batch Size Validation**
+   - Must be within limits
+   - Must be positive
+   - Must be reasonable size
+
+## Best Practices
+
+1. **Input Validation**
+
+   - Validate all inputs
+   - Check data types
+   - Verify format
+   - Handle edge cases
+
+2. **Error Handling**
+
+   - Provide clear error messages
+   - Handle validation failures
+   - Implement recovery strategies
+   - Log validation errors
+
+3. **Performance**
+   - Optimize validation logic
+   - Cache validation results
+   - Batch validations
+   - Handle large datasets
+
+## Use Cases
+
+- Stream creation validation
+- Snapshot creation validation
+- Permission management validation
+- Batch operation validation
+- Data update validation
+
+## Next Steps
+
+- Learn about [Error Handling](/docs/sdk/error-handling)
+- Explore [Stream Management](/docs/sdk/stream-management)
+- Check out [Event Handling](/docs/sdk/event-handling)

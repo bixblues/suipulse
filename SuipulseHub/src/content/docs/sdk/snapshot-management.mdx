@@ -1,0 +1,85 @@
+# Snapshot Management
+
+Snapshot management in SuiPulse allows you to capture and manage point-in-time states of data streams.
+
+## Overview
+
+Snapshot management enables:
+
+- Creating stream snapshots
+- Updating snapshot data
+- Retrieving snapshot information
+- Managing snapshot ownership
+
+## Creating Snapshots
+
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Create a snapshot
+const response = await suiPulse.createSnapshot("0x123...", {
+  metadata: "Snapshot metadata",
+});
+```
+
+## Managing Snapshots
+
+```typescript
+// Get snapshot data
+const snapshot = await suiPulse.getSnapshotData("0x123...");
+
+// Update snapshot data
+await suiPulse.updateSnapshot("0x123...", new Uint8Array([1, 2, 3]));
+
+// Get snapshot version
+const version = await suiPulse.getSnapshotVersion("0x123...");
+
+// Get associated stream ID
+const streamId = await suiPulse.getSnapshotStreamId("0x123...");
+```
+
+## Snapshot Configuration
+
+```typescript
+interface SnapshotConfig {
+  metadata: string;
+}
+```
+
+## Best Practices
+
+1. **Data Management**
+
+   - Create snapshots regularly
+   - Verify snapshot integrity
+   - Monitor snapshot versions
+
+2. **Performance**
+
+   - Optimize snapshot size
+   - Manage snapshot frequency
+   - Handle large datasets
+
+3. **Security**
+   - Control snapshot access
+   - Verify snapshot ownership
+   - Protect snapshot data
+
+## Use Cases
+
+- Data backup
+- State verification
+- Historical analysis
+- Data recovery
+- Audit trails
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Access Control](/docs/sdk/access-control)
+- Check out [Event Handling](/docs/sdk/event-handling)

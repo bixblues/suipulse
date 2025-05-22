@@ -1,90 +1,104 @@
 # Access Control
 
-SuiPulse provides flexible access control mechanisms to secure your data streams. You can configure who can read and write to your streams, ensuring data privacy and security.
+SuiPulse provides a flexible permission system for securing your data streams and controlling access.
 
-## Access Levels
+## Overview
 
-### Public Access
+Access control in SuiPulse is managed through:
 
-Anyone can read the stream data.
+- Public/private stream settings
+- Permission levels
+- Address-based access control
 
-```typescript
-await client.updateStreamPermissions(stream.id, {
-  readAccess: "public",
-  writeAccess: "private",
-});
-```
+## Permission Levels
 
-### Private Access
+SuiPulse supports three permission levels:
 
-Only authorized addresses can read and write.
-
-```typescript
-await client.updateStreamPermissions(stream.id, {
-  readAccess: "private",
-  writeAccess: "private",
-  authorizedReaders: ["0x123..."],
-  authorizedWriters: ["0x123..."],
-});
-```
-
-### Write-Restricted Access
-
-Anyone can read, but only authorized addresses can write.
-
-```typescript
-await client.updateStreamPermissions(stream.id, {
-  readAccess: "public",
-  writeAccess: "private",
-  authorizedWriters: ["0x123..."],
-});
-```
+- `0`: Read access
+- `1`: Write access
+- `2`: Admin access
 
 ## Managing Permissions
 
-### Adding Authorized Users
+### Add Permission
 
 ```typescript
-await client.addAuthorizedUsers(stream.id, {
-  readers: ["0x456..."],
-  writers: ["0x789..."],
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Add read permission
+await suiPulse.addPermission(streamId, address, 0);
+
+// Add write permission
+await suiPulse.addPermission(streamId, address, 1);
+
+// Add admin permission
+await suiPulse.addPermission(streamId, address, 2);
+```
+
+### Check Subscription
+
+```typescript
+const isSubscribed = await suiPulse.isSubscribed(streamId, address);
+console.log(`Address ${address} is ${isSubscribed ? "" : "not "}subscribed`);
+```
+
+## Stream Visibility
+
+### Public Streams
+
+```typescript
+// Create a public stream
+const result = await suiPulse.createStream({
+  name: "Public Stream",
+  description: "A publicly accessible stream",
+  metadata: new Uint8Array(Buffer.from("Public metadata")),
+  isPublic: true,
 });
 ```
 
-### Removing Authorized Users
+### Private Streams
 
 ```typescript
-await client.removeAuthorizedUsers(stream.id, {
-  readers: ["0x456..."],
-  writers: ["0x789..."],
+// Create a private stream
+const result = await suiPulse.createStream({
+  name: "Private Stream",
+  description: "A private stream with restricted access",
+  metadata: new Uint8Array(Buffer.from("Private metadata")),
+  isPublic: false,
 });
 ```
 
 ## Best Practices
 
-1. **Principle of Least Privilege**
+1. **Permission Management**
 
-   - Grant only necessary permissions
-   - Regularly review access lists
-   - Remove unused permissions
+   - Use appropriate permission levels
+   - Regularly audit access
+   - Implement proper cleanup
 
-2. **Permission Management**
+2. **Security**
 
-   - Use role-based access control
-   - Implement permission inheritance
+   - Validate addresses
    - Monitor access patterns
+   - Handle sensitive data appropriately
 
-3. **Security Considerations**
-   - Rotate authorized addresses
-   - Implement multi-signature for critical operations
-   - Use secure key management
+3. **Access Patterns**
+   - Plan for scalability
+   - Consider batch operations
+   - Implement proper error handling
 
-## Common Use Cases
+## Use Cases
 
-- Private data sharing
-- Multi-party collaboration
-- Enterprise data management
-- Regulatory compliance
+- Multi-user applications
+- Enterprise data sharing
+- DeFi protocols
+- Gaming platforms
+- IoT networks
 
 ## Next Steps
 

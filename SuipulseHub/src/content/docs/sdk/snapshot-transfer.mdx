@@ -1,0 +1,139 @@
+# Snapshot Transfer
+
+Snapshot transfer in SuiPulse allows you to transfer ownership and control of snapshots between different addresses.
+
+## Overview
+
+Snapshot transfer enables:
+
+- Transferring snapshot ownership
+- Managing snapshot permissions
+- Verifying transfer status
+- Handling transfer events
+
+## Basic Transfer
+
+```typescript
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Transfer a snapshot
+const response = await suiPulse.transferSnapshot(
+  "0x123...", // snapshot ID
+  "0x456..." // recipient address
+);
+```
+
+## Transfer with Metadata
+
+```typescript
+// Transfer snapshot with additional metadata
+const response = await suiPulse.transferSnapshot("0x123...", "0x456...", {
+  metadata: "Transfer metadata",
+  reason: "Business transfer",
+});
+```
+
+## Verifying Transfer
+
+```typescript
+// Check snapshot ownership
+const snapshot = await suiPulse.getSnapshotData("0x123...");
+console.log("Current owner:", snapshot.owner);
+
+// Verify transfer status
+const isTransferred = await suiPulse.verifySnapshotTransfer(
+  "0x123...",
+  "0x456..."
+);
+```
+
+## Handling Transfer Events
+
+```typescript
+// Subscribe to transfer events
+suiPulse.events.subscribe("SnapshotTransfer", {
+  onEvent: (event) => {
+    console.log("Snapshot transferred:", event);
+    console.log("From:", event.from);
+    console.log("To:", event.to);
+    console.log("Timestamp:", event.timestamp);
+  },
+});
+```
+
+## Best Practices
+
+1. **Pre-Transfer Checks**
+
+   - Verify current ownership
+   - Validate recipient address
+   - Check snapshot status
+   - Ensure proper permissions
+
+2. **Transfer Process**
+
+   - Use atomic transactions
+   - Handle transfer failures
+   - Monitor transfer status
+   - Maintain transfer logs
+
+3. **Post-Transfer Actions**
+
+   - Update access controls
+   - Notify relevant parties
+   - Update documentation
+   - Verify new ownership
+
+4. **Security Considerations**
+   - Use secure channels
+   - Implement proper authentication
+   - Monitor transfer patterns
+   - Handle edge cases
+
+## Use Cases
+
+- Business acquisitions
+- Asset transfers
+- Data sharing agreements
+- Organizational changes
+- Access control updates
+
+## Common Scenarios
+
+1. **Business Transfer**
+
+   ```typescript
+   // Transfer snapshot as part of business acquisition
+   await suiPulse.transferSnapshot(snapshotId, newOwnerAddress, {
+     reason: "Business acquisition",
+   });
+   ```
+
+2. **Temporary Transfer**
+
+   ```typescript
+   // Transfer for temporary access
+   await suiPulse.transferSnapshot(snapshotId, temporaryOwnerAddress, {
+     duration: "30d",
+   });
+   ```
+
+3. **Batch Transfer**
+   ```typescript
+   // Transfer multiple snapshots
+   const snapshots = ["0x123...", "0x456...", "0x789..."];
+   for (const snapshotId of snapshots) {
+     await suiPulse.transferSnapshot(snapshotId, newOwnerAddress);
+   }
+   ```
+
+## Next Steps
+
+- Learn about [Snapshot Management](/docs/sdk/snapshot-management)
+- Explore [Access Control](/docs/sdk/access-control)
+- Check out [Event Handling](/docs/sdk/event-handling)

@@ -1,6 +1,6 @@
 # Client Setup
 
-This guide covers how to set up and configure the SuiPulse SDK client in your application.
+This guide covers how to set up and configure the SuiPulse SDK in your application.
 
 ## Installation
 
@@ -15,95 +15,143 @@ npm install @suipulse/sdk
 ### Initialize Client
 
 ```typescript
-import { SuiPulseClient } from "@suipulse/sdk";
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 
-const client = new SuiPulseClient({
-  network: "devnet", // or "mainnet"
-  // Optional configuration
-  options: {
-    maxRetries: 3,
-    timeout: 5000,
-  },
-});
+// Create a keypair (you can use your own keypair management)
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+
+// Initialize SuiPulse
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
 ```
 
 ### Network Configuration
 
 ```typescript
-const client = new SuiPulseClient({
-  network: "devnet",
-  rpcUrl: "https://your-custom-rpc-url",
-  wsUrl: "wss://your-custom-ws-url",
+// For mainnet
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// For testnet
+const suiPulse = new SuiPulse(keypair, Network.TESTNET);
+```
+
+## Stream Operations
+
+### Create a Stream
+
+```typescript
+const result = await suiPulse.createStream({
+  name: "My Stream",
+  description: "A test data stream",
+  metadata: new Uint8Array(Buffer.from("Initial metadata")),
+  isPublic: true,
 });
 ```
 
-## Authentication
-
-### Wallet Integration
+### Update a Stream
 
 ```typescript
-import { Wallet } from "@mysten/wallet-standard";
-
-const client = new SuiPulseClient({
-  network: "devnet",
-  wallet: wallet, // Your wallet instance
+await suiPulse.updateStream(streamId, {
+  data: new Uint8Array(Buffer.from("Updated data")),
 });
 ```
 
-### API Key Authentication
+### Get Stream Data
 
 ```typescript
-const client = new SuiPulseClient({
-  network: "devnet",
-  apiKey: "your-api-key",
+const streamData = await suiPulse.getDataStream(streamId);
+```
+
+## Snapshot Operations
+
+### Create a Snapshot
+
+```typescript
+const result = await suiPulse.createSnapshot(streamId, {
+  metadata: "Snapshot metadata",
 });
 ```
 
-## Error Handling
-
-### Custom Error Handler
+### Get Snapshot Data
 
 ```typescript
-const client = new SuiPulseClient({
-  network: "devnet",
-  onError: (error) => {
-    console.error("SuiPulse Error:", error);
-    // Custom error handling logic
-  },
+const snapshotData = await suiPulse.getSnapshotData(snapshotId);
+```
+
+## Batch Operations
+
+### Create Multiple Streams
+
+```typescript
+const result = await suiPulse.createStreamsBatch({
+  streams: [
+    {
+      name: "Stream 1",
+      description: "First stream",
+      metadata: new Uint8Array(Buffer.from("Metadata 1")),
+      isPublic: true,
+    },
+    {
+      name: "Stream 2",
+      description: "Second stream",
+      metadata: new Uint8Array(Buffer.from("Metadata 2")),
+      isPublic: false,
+    },
+  ],
+  options: { parallel: true },
 });
 ```
 
-### Retry Configuration
+### Update Multiple Streams
 
 ```typescript
-const client = new SuiPulseClient({
-  network: "devnet",
-  retryConfig: {
-    maxRetries: 3,
-    retryDelay: 1000,
-    retryOn: [408, 500, 502, 503, 504],
-  },
+const result = await suiPulse.updateStreamsBatch({
+  updates: [
+    {
+      streamId: "0x123...",
+      data: new Uint8Array(Buffer.from("Update 1")),
+    },
+    {
+      streamId: "0x456...",
+      data: new Uint8Array(Buffer.from("Update 2")),
+    },
+  ],
+  options: { parallel: true },
 });
+```
+
+## Permission Management
+
+### Add Permission
+
+```typescript
+await suiPulse.addPermission(streamId, address, permissionLevel);
+```
+
+### Check Subscription
+
+```typescript
+const isSubscribed = await suiPulse.isSubscribed(streamId, address);
 ```
 
 ## Best Practices
 
-1. **Environment Configuration**
+1. **Keypair Management**
 
+   - Securely store your private keys
    - Use environment variables for sensitive data
-   - Configure different settings for development and production
-   - Keep API keys secure
+   - Implement proper key rotation
 
 2. **Error Handling**
 
    - Implement proper error boundaries
-   - Log errors appropriately
+   - Handle network errors gracefully
    - Provide user-friendly error messages
 
 3. **Performance**
-   - Configure appropriate timeouts
-   - Use connection pooling
-   - Implement caching where appropriate
+   - Use batch operations for multiple updates
+   - Implement proper cleanup
+   - Handle large data appropriately
 
 ## Next Steps
 

@@ -7,22 +7,31 @@ This guide covers how to manage data streams using the SuiPulse SDK.
 ### Basic Stream Creation
 
 ```typescript
-const stream = await client.createStream({
-  name: "temperature-data",
-  description: "Temperature readings from sensors",
+const result = await suiPulse.createStream({
+  name: "My Stream",
+  description: "A test data stream",
+  metadata: new Uint8Array(Buffer.from("Initial metadata")),
+  isPublic: true,
 });
+
+// Get the stream ID from the result
+const streamId = result.streamId;
 ```
 
-### Stream with Initial Data
+### Stream with Custom Metadata
 
 ```typescript
-const stream = await client.createStream({
-  name: "temperature-data",
-  description: "Temperature readings from sensors",
-  initialData: {
-    temperature: 20,
-    humidity: 50,
-  },
+const metadata = {
+  version: "1.0.0",
+  tags: ["test", "example"],
+  customField: "value",
+};
+
+const result = await suiPulse.createStream({
+  name: "Custom Stream",
+  description: "Stream with custom metadata",
+  metadata: new Uint8Array(Buffer.from(JSON.stringify(metadata))),
+  isPublic: false,
 });
 ```
 
@@ -31,94 +40,127 @@ const stream = await client.createStream({
 ### Single Update
 
 ```typescript
-await client.updateStream(stream.id, {
-  temperature: 22.5,
-  humidity: 55,
+await suiPulse.updateStream(streamId, {
+  data: new Uint8Array(Buffer.from("Updated stream data")),
 });
 ```
 
 ### Batch Updates
 
 ```typescript
-await client.batchUpdateStream(stream.id, [
-  { temperature: 22.5, humidity: 55, timestamp: Date.now() },
-  { temperature: 23.0, humidity: 54, timestamp: Date.now() + 1000 },
-]);
+const result = await suiPulse.updateStreamsBatch({
+  updates: [
+    {
+      streamId: "0x123...",
+      data: new Uint8Array(Buffer.from("Update 1")),
+    },
+    {
+      streamId: "0x456...",
+      data: new Uint8Array(Buffer.from("Update 2")),
+    },
+  ],
+  options: { parallel: true },
+});
+
+// Check results
+console.log("Total updates:", result.summary.total);
+console.log("Successful:", result.summary.succeeded);
+console.log("Failed:", result.summary.failed);
 ```
 
 ## Reading Stream Data
 
-### Get Current State
+### Get Stream Data
 
 ```typescript
-const data = await client.getStreamData(stream.id);
-console.log(data);
+const streamData = await suiPulse.getDataStream(streamId);
+console.log("Stream data:", streamData);
 ```
 
-### Get Historical Data
+### Get Snapshot Data
 
 ```typescript
-const history = await client.getStreamHistory(stream.id, {
-  startTime: "2024-01-01",
-  endTime: "2024-01-31",
-  limit: 100,
+const snapshotData = await suiPulse.getSnapshotData(snapshotId);
+console.log("Snapshot data:", snapshotData);
+```
+
+## Stream Composition
+
+### Compose Streams
+
+```typescript
+await suiPulse.composeStreams(parentStreamId, childStreamId);
+```
+
+### Get Snapshot Stream ID
+
+```typescript
+const streamId = await suiPulse.getSnapshotStreamId(snapshotId);
+```
+
+## Permission Management
+
+### Add Permission
+
+```typescript
+// Permission levels: 0 (read), 1 (write), 2 (admin)
+await suiPulse.addPermission(streamId, address, 1);
+```
+
+### Check Subscription
+
+```typescript
+const isSubscribed = await suiPulse.isSubscribed(streamId, address);
+console.log(`Address ${address} is ${isSubscribed ? "" : "not "}subscribed`);
+```
+
+## Snapshot Management
+
+### Create Snapshot
+
+```typescript
+const result = await suiPulse.createSnapshot(streamId, {
+  metadata: "Snapshot metadata",
+});
+
+// Get snapshot ID from the event
+const snapshotId = result.events.find(
+  (event) => event.type === `${suiPulse.packageId}::storage::SnapshotCreated`
+)?.parsedJson.snapshot_id;
+```
+
+### Update Snapshot
+
+```typescript
+await suiPulse.updateSnapshot(snapshotId, {
+  data: new Uint8Array(Buffer.from("Updated snapshot data")),
 });
 ```
 
-## Stream Configuration
-
-### Update Stream Settings
+### Transfer Snapshot
 
 ```typescript
-await client.updateStreamSettings(stream.id, {
-  name: "new-name",
-  description: "updated description",
-  retention: "30d",
-});
-```
-
-### Configure Access Control
-
-```typescript
-await client.updateStreamPermissions(stream.id, {
-  readAccess: "public",
-  writeAccess: "private",
-  authorizedWriters: ["0x123..."],
-});
-```
-
-## Stream Lifecycle
-
-### Delete Stream
-
-```typescript
-await client.deleteStream(stream.id);
-```
-
-### Archive Stream
-
-```typescript
-await client.archiveStream(stream.id);
+await suiPulse.transferSnapshot(snapshotId, recipientAddress);
 ```
 
 ## Best Practices
 
-1. **Data Structure**
+1. **Data Management**
 
-   - Keep data structures consistent
-   - Include timestamps with updates
-   - Consider data size limits
+   - Use appropriate data formats
+   - Handle large data efficiently
+   - Implement proper error handling
 
-2. **Update Strategy**
+2. **Batch Operations**
 
-   - Use batch updates for high-frequency data
-   - Implement retry logic
-   - Handle conflicts appropriately
+   - Use batch operations for multiple updates
+   - Handle partial failures gracefully
+   - Monitor operation results
 
-3. **Performance**
-   - Monitor stream size
-   - Implement data retention policies
-   - Use appropriate access patterns
+3. **Security**
+   - Set appropriate permission levels
+   - Validate input data
+   - Handle sensitive data securely
 
 ## Next Steps
 

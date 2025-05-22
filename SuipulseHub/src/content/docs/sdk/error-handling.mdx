@@ -1,0 +1,119 @@
+# Error Handling
+
+Error handling in SuiPulse provides a robust system for managing and responding to various types of errors that may occur during SDK operations.
+
+## Overview
+
+Error handling enables:
+
+- Custom error types
+- Detailed error messages
+- Error categorization
+- Error recovery strategies
+
+## Error Types
+
+```typescript
+enum SuiPulseErrorType {
+  INVALID_CONFIG = "INVALID_CONFIG",
+  TRANSACTION_FAILED = "TRANSACTION_FAILED",
+  NOT_FOUND = "NOT_FOUND",
+  QUERY_FAILED = "QUERY_FAILED",
+  VALIDATION_ERROR = "VALIDATION_ERROR",
+  UNKNOWN_ERROR = "UNKNOWN_ERROR",
+}
+```
+
+## Using Error Handling
+
+```typescript
+import {
+  SuiPulse,
+  Network,
+  SuiPulseError,
+  SuiPulseErrorType,
+} from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
+
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+try {
+  // Attempt operation
+  await suiPulse.createStream({
+    name: "My Stream",
+    description: "A test stream",
+    isPublic: true,
+  });
+} catch (error) {
+  if (error instanceof SuiPulseError) {
+    switch (error.type) {
+      case SuiPulseErrorType.INVALID_CONFIG:
+        console.error("Configuration error:", error.message);
+        break;
+      case SuiPulseErrorType.TRANSACTION_FAILED:
+        console.error("Transaction failed:", error.message);
+        break;
+      case SuiPulseErrorType.NOT_FOUND:
+        console.error("Resource not found:", error.message);
+        break;
+      default:
+        console.error("Unknown error:", error.message);
+    }
+  } else {
+    console.error("Unexpected error:", error);
+  }
+}
+```
+
+## Error Properties
+
+```typescript
+class SuiPulseError extends Error {
+  constructor(
+    public type: SuiPulseErrorType,
+    message: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = "SuiPulseError";
+  }
+}
+```
+
+## Best Practices
+
+1. **Error Handling**
+
+   - Always use try-catch blocks
+   - Check error types
+   - Handle specific error cases
+   - Provide meaningful error messages
+
+2. **Recovery Strategies**
+
+   - Implement retry mechanisms
+   - Handle partial failures
+   - Maintain error logs
+   - Implement fallback options
+
+3. **Debugging**
+   - Log error details
+   - Track error patterns
+   - Monitor error rates
+   - Implement error reporting
+
+## Use Cases
+
+- Transaction error handling
+- Network error recovery
+- Validation error management
+- Resource not found handling
+- Configuration error resolution
+
+## Next Steps
+
+- Learn about [Client Setup](/docs/sdk/client-setup)
+- Explore [Stream Management](/docs/sdk/stream-management)
+- Check out [Event Handling](/docs/sdk/event-handling)

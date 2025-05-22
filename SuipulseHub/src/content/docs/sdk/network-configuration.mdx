@@ -1,0 +1,117 @@
+# Network Configuration
+
+The SuiPulse SDK provides flexible network configuration options to connect to different Sui networks and customize connection settings.
+
+## Network Types
+
+The SDK supports three main network types:
+
+```typescript
+import { NetworkType } from "@suipulse/sdk";
+
+// Mainnet
+const mainnet = NetworkType.MAINNET;
+
+// Testnet
+const testnet = NetworkType.TESTNET;
+
+// Devnet
+const devnet = NetworkType.DEVNET;
+```
+
+## Basic Configuration
+
+Initialize the SDK with network configuration:
+
+```typescript
+import { SuiPulse } from "@suipulse/sdk";
+
+const suiPulse = new SuiPulse({
+  network: NetworkType.TESTNET,
+  rpcUrl: "https://fullnode.testnet.sui.io:443",
+});
+```
+
+## Advanced Configuration
+
+### Custom RPC URL
+
+You can specify a custom RPC URL for any network:
+
+```typescript
+const suiPulse = new SuiPulse({
+  network: NetworkType.TESTNET,
+  rpcUrl: "https://your-custom-rpc.testnet.sui.io:443",
+});
+```
+
+### Connection Options
+
+Configure additional connection parameters:
+
+```typescript
+const suiPulse = new SuiPulse({
+  network: NetworkType.TESTNET,
+  rpcUrl: "https://fullnode.testnet.sui.io:443",
+  connectionOptions: {
+    timeout: 30000, // 30 seconds
+    maxRetries: 3,
+    retryDelay: 1000, // 1 second
+  },
+});
+```
+
+## Network Switching
+
+You can switch networks after initialization:
+
+```typescript
+// Switch to mainnet
+await suiPulse.switchNetwork(NetworkType.MAINNET);
+
+// Switch to testnet with custom RPC
+await suiPulse.switchNetwork(NetworkType.TESTNET, {
+  rpcUrl: "https://custom-testnet.sui.io:443",
+});
+```
+
+## Best Practices
+
+1. **Environment Variables**: Store network configuration in environment variables
+2. **Error Handling**: Implement proper error handling for network switches
+3. **Connection Monitoring**: Monitor connection health and implement reconnection logic
+4. **Rate Limiting**: Be aware of RPC rate limits and implement appropriate throttling
+
+## Example: Environment-based Configuration
+
+```typescript
+const getNetworkConfig = () => {
+  const env = process.env.NODE_ENV;
+
+  switch (env) {
+    case "production":
+      return {
+        network: NetworkType.MAINNET,
+        rpcUrl: process.env.MAINNET_RPC_URL,
+      };
+    case "staging":
+      return {
+        network: NetworkType.TESTNET,
+        rpcUrl: process.env.TESTNET_RPC_URL,
+      };
+    default:
+      return {
+        network: NetworkType.DEVNET,
+        rpcUrl: process.env.DEVNET_RPC_URL,
+      };
+  }
+};
+
+const suiPulse = new SuiPulse(getNetworkConfig());
+```
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Error Handling](/docs/sdk/error-handling)
+- Understand [Client Setup](/docs/sdk/client-setup)

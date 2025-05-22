@@ -6,7 +6,8 @@
     "contracts",
     "sdk",
     "backend",
-    "cli"
+    "cli",
+    "SuipulseHub"
   ],
   "scripts": {
     "build": "npm run build --workspace=sdk",

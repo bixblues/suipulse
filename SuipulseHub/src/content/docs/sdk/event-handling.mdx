@@ -2,65 +2,113 @@
 
 This guide covers how to handle events and real-time updates in SuiPulse.
 
-## Subscribing to Events
-
-### Basic Subscription
-
-```typescript
-const unsubscribe = await client.subscribeToStream(stream.id, (data) => {
-  console.log("Stream updated:", data);
-});
-
-// Later: stop listening for updates
-unsubscribe();
-```
-
-### Filtered Subscription
-
-```typescript
-const unsubscribe = await client.subscribeToStream(
-  stream.id,
-  (data) => {
-    console.log("Stream updated:", data);
-  },
-  {
-    filter: { temperature: { $gt: 20 } },
-  }
-);
-```
-
 ## Event Types
 
 ### Stream Events
 
 ```typescript
-client.on("stream:created", (event) => {
-  console.log("New stream created:", event.streamId);
-});
+// Stream Created Event
+{
+  type: `${packageId}::storage::StreamCreated`,
+  parsedJson: {
+    stream_id: string;
+    name: string;
+    description: string;
+  }
+}
 
-client.on("stream:updated", (event) => {
-  console.log("Stream updated:", event.streamId, event.data);
-});
+// Stream Updated Event
+{
+  type: `${packageId}::storage::StreamUpdated`,
+  parsedJson: {
+    stream_id: string;
+    version: number;
+  }
+}
 
-client.on("stream:deleted", (event) => {
-  console.log("Stream deleted:", event.streamId);
-});
+// Snapshot Created Event
+{
+  type: `${packageId}::storage::SnapshotCreated`,
+  parsedJson: {
+    snapshot_id: string;
+    stream_id: string;
+  }
+}
 ```
 
-### System Events
+## Event Subscription
+
+### Subscribe to Stream Events
 
 ```typescript
-client.on("error", (error) => {
-  console.error("SuiPulse error:", error);
-});
+// Subscribe to stream creation events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "StreamCreated",
+  (event) => {
+    console.log("New stream created:", event.parsedJson.stream_id);
+  }
+);
 
-client.on("connected", () => {
-  console.log("Connected to SuiPulse");
-});
+// Subscribe to stream update events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "StreamUpdated",
+  (event) => {
+    console.log("Stream updated:", event.parsedJson.stream_id);
+  }
+);
 
-client.on("disconnected", () => {
-  console.log("Disconnected from SuiPulse");
-});
+// Subscribe to snapshot creation events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "SnapshotCreated",
+  (event) => {
+    console.log("New snapshot created:", event.parsedJson.snapshot_id);
+  }
+);
+
+// Later: stop listening for updates
+unsubscribe();
+```
+
+## Event Handling Example
+
+### Monitor Stream Updates
+
+```typescript
+class StreamMonitor {
+  private subscriptions: Map<string, () => void> = new Map();
+
+  async monitorStream(streamId: string) {
+    const unsubscribe = await suiPulse.subscribeToEvents(
+      "StreamUpdated",
+      (event) => {
+        if (event.parsedJson.stream_id === streamId) {
+          this.handleStreamUpdate(event);
+        }
+      }
+    );
+    this.subscriptions.set(streamId, unsubscribe);
+  }
+
+  private handleStreamUpdate(event: any) {
+    console.log(
+      `Stream ${event.parsedJson.stream_id} updated to version ${event.parsedJson.version}`
+    );
+    // Add your custom handling logic here
+  }
+
+  stopMonitoring(streamId: string) {
+    const unsubscribe = this.subscriptions.get(streamId);
+    if (unsubscribe) {
+      unsubscribe();
+      this.subscriptions.delete(streamId);
+    }
+  }
+
+  cleanup() {
+    this.subscriptions.forEach((unsubscribe) => unsubscribe());
+    this.subscriptions.clear();
+  }
+}
 ```
 
 ## Error Handling
@@ -68,35 +116,17 @@ client.on("disconnected", () => {
 ### Event Error Handling
 
 ```typescript
-const unsubscribe = await client.subscribeToStream(
-  stream.id,
-  (data) => {
-    console.log("Stream updated:", data);
-  },
-  {
-    onError: (error) => {
-      console.error("Subscription error:", error);
-      // Implement retry logic
-    },
-  }
-);
-```
-
-### Reconnection Strategy
-
-```typescript
-const unsubscribe = await client.subscribeToStream(
-  stream.id,
-  (data) => {
-    console.log("Stream updated:", data);
-  },
-  {
-    reconnect: {
-      maxRetries: 3,
-      retryDelay: 1000,
-    },
-  }
-);
+try {
+  const unsubscribe = await suiPulse.subscribeToEvents(
+    "StreamUpdated",
+    (event) => {
+      console.log("Stream updated:", event);
+    }
+  );
+} catch (error) {
+  console.error("Failed to subscribe to events:", error);
+  // Implement retry logic or error recovery
+}
 ```
 
 ## Best Practices
@@ -109,8 +139,8 @@ const unsubscribe = await client.subscribeToStream(
 
 2. **Performance**
 
-   - Use appropriate event filters
-   - Batch process events when possible
+   - Subscribe only to needed events
+   - Process events efficiently
    - Monitor event queue size
 
 3. **Reliability**
@@ -125,10 +155,21 @@ class StreamDashboard {
   private subscriptions: Map<string, () => void> = new Map();
 
   async addStream(streamId: string) {
-    const unsubscribe = await client.subscribeToStream(streamId, (data) => {
-      this.updateDashboard(streamId, data);
-    });
+    const unsubscribe = await suiPulse.subscribeToEvents(
+      "StreamUpdated",
+      (event) => {
+        if (event.parsedJson.stream_id === streamId) {
+          this.updateDashboard(streamId, event);
+        }
+      }
+    );
     this.subscriptions.set(streamId, unsubscribe);
+  }
+
+  private updateDashboard(streamId: string, event: any) {
+    // Update your dashboard UI here
+    console.log(`Updating dashboard for stream ${streamId}`);
+    console.log("Event data:", event);
   }
 
   removeStream(streamId: string) {

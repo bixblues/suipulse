@@ -1,129 +1,100 @@
 # Analytics
 
-SuiPulse provides powerful analytics capabilities to monitor and analyze your data streams. Track usage patterns, identify trends, and optimize your application's performance.
+SuiPulse provides powerful analytics capabilities for monitoring and analyzing your data streams.
 
-## Stream Metrics
+## Overview
 
-### Basic Metrics
+Analytics in SuiPulse helps you:
+
+- Monitor stream performance
+- Track usage patterns
+- Analyze data trends
+- Optimize resource usage
+
+## Event Monitoring
+
+### Stream Events
 
 ```typescript
-const metrics = await client.getStreamMetrics(stream.id, {
-  startTime: "2024-01-01",
-  endTime: "2024-01-31",
-});
+import { SuiPulse, Network } from "@suipulse/sdk";
+import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
 
-console.log({
-  updateCount: metrics.updates,
-  averageSize: metrics.avgSize,
-  peakUsage: metrics.peakUsage,
-});
+// Initialize SuiPulse
+const keypair = Ed25519Keypair.fromSecretKey(/* your private key */);
+const suiPulse = new SuiPulse(keypair, Network.MAINNET);
+
+// Monitor stream creation events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "StreamCreated",
+  (event) => {
+    console.log("New stream created:", event.parsedJson.stream_id);
+  }
+);
+
+// Monitor stream update events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "StreamUpdated",
+  (event) => {
+    console.log("Stream updated:", event.parsedJson.stream_id);
+  }
+);
 ```
 
-### Custom Metrics
+### Snapshot Events
 
 ```typescript
-const customMetrics = await client.getCustomMetrics(stream.id, {
-  metrics: ["temperature", "humidity"],
-  aggregation: "hourly",
-});
-```
-
-## Monitoring
-
-### Real-time Monitoring
-
-```typescript
-const unsubscribe = await client.subscribeToMetrics(stream.id, (metrics) => {
-  console.log("Current metrics:", metrics);
-});
-```
-
-### Alerts
-
-```typescript
-await client.setAlert(stream.id, {
-  metric: "temperature",
-  condition: ">",
-  value: 30,
-  action: "notify",
-});
+// Monitor snapshot creation events
+const unsubscribe = await suiPulse.subscribeToEvents(
+  "SnapshotCreated",
+  (event) => {
+    console.log("New snapshot created:", event.parsedJson.snapshot_id);
+  }
+);
 ```
 
 ## Data Analysis
 
-### Time Series Analysis
+### Stream Data Analysis
 
 ```typescript
-const analysis = await client.analyzeTimeSeries(stream.id, {
-  metric: "temperature",
-  window: "1h",
-  aggregation: "avg",
-});
-```
+// Get stream data
+const streamData = await suiPulse.getDataStream(streamId);
+console.log("Stream data:", streamData);
 
-### Pattern Detection
-
-```typescript
-const patterns = await client.detectPatterns(stream.id, {
-  metric: "temperature",
-  minConfidence: 0.8,
-});
-```
-
-## Visualization
-
-### Export Data
-
-```typescript
-const csvData = await client.exportMetrics(stream.id, {
-  format: "csv",
-  metrics: ["temperature", "humidity"],
-});
-```
-
-### Integration
-
-```typescript
-const dashboard = await client.createDashboard(stream.id, {
-  name: "Temperature Monitor",
-  charts: [
-    {
-      type: "line",
-      metric: "temperature",
-      timeRange: "24h",
-    },
-  ],
-});
+// Get snapshot data
+const snapshotData = await suiPulse.getSnapshotData(snapshotId);
+console.log("Snapshot data:", snapshotData);
 ```
 
 ## Best Practices
 
-1. **Metric Selection**
+1. **Monitoring**
 
-   - Focus on key performance indicators
-   - Balance detail with performance
-   - Consider storage implications
+   - Track key metrics
+   - Set up alerts
+   - Monitor resource usage
 
-2. **Monitoring Strategy**
+2. **Performance**
 
-   - Set appropriate thresholds
-   - Use multiple alert channels
-   - Implement escalation policies
+   - Optimize data structures
+   - Use batch operations
+   - Implement caching
 
-3. **Data Retention**
-   - Define retention policies
-   - Archive historical data
-   - Optimize storage costs
+3. **Analysis**
+   - Plan data retention
+   - Use appropriate tools
+   - Document insights
 
 ## Use Cases
 
 - Performance monitoring
 - Usage analytics
+- Trend analysis
+- Resource optimization
 - Capacity planning
-- Cost optimization
 
 ## Next Steps
 
 - Learn about [Data Streams](/docs/core-concepts/data-streams)
-- Explore [Access Control](/docs/core-concepts/access-control)
-- Check out [Snapshots](/docs/core-concepts/snapshots)
+- Explore [Snapshots](/docs/core-concepts/snapshots)
+- Check out [Access Control](/docs/core-concepts/access-control)
