@@ -145,4 +145,6 @@ const ListItem = React.forwardRef<
   );
 });
 
+ListItem.displayName = "ListItem";
+
 export { Navbar };

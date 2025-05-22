@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const metadata = {
+export const metadata = {
   title: "SuiPulse - Real-time Data Streams on Sui",
   description:
     "Build, manage, and scale your data streams with ease. SuiPulse provides a powerful SDK and CLI for seamless data stream management on the Sui blockchain.",
