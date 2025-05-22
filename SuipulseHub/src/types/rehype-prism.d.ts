@@ -1,4 +1,4 @@
-declare module "rehype-prism-plus" {
+declare module "@mapbox/rehype-prism" {
   const rehypePrism: () => (tree: unknown) => void;
   export default rehypePrism;
 }
