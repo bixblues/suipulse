@@ -19,7 +19,8 @@ export async function GET(request: Request) {
       "utf-8"
     );
     return NextResponse.json({ content });
-  } catch (error) {
+  } catch (err) {
+    console.error("Error reading MDX file:", err);
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 }

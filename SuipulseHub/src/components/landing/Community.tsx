@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { Github, Twitter, MessageSquare, Coffee, Heart } from "lucide-react";
+import { Coffee, Github } from "lucide-react";
 import Image from "next/image";
 
 interface Project {
@@ -176,7 +176,7 @@ export function Community() {
           <div className="flex flex-wrap items-center justify-center gap-6">
             <div className="flex flex-wrap items-center gap-4">
               <motion.a
-                href="https://github.com/suipulse/suipulse/blob/main/CONTRIBUTING.md"
+                href="https://github.com/bixblues/suipulse"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center gap-2 rounded-full bg-card px-6 py-3 text-sm font-medium text-foreground shadow-md transition-all hover:bg-card/80 hover:shadow-lg"

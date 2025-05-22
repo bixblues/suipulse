@@ -2,6 +2,7 @@
 
 import { MDXComponents } from "mdx/types";
 import { ReactElement } from "react";
+import Image from "next/image";
 
 export const components: MDXComponents = {
   h1: (props) => <h1 {...props} />,
@@ -23,7 +24,16 @@ export const components: MDXComponents = {
   th: (props) => <th {...props} />,
   td: (props) => <td {...props} />,
   hr: (props) => <hr {...props} />,
-  img: (props) => <img {...props} />,
+  img: ({ src, alt, ...props }: { src: string; alt?: string }) => (
+    <Image
+      src={src}
+      alt={alt || ""}
+      width={800}
+      height={400}
+      className="rounded-lg"
+      {...props}
+    />
+  ),
 };
 
 interface MdxProps {

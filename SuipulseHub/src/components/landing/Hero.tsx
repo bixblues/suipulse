@@ -24,9 +24,10 @@ export function Hero() {
                 Streams on Sui
               </span>
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground">
-              Build powerful decentralized applications with SuiPulse's
-              real-time data streaming protocol.
+            <p className="text-lg text-muted-foreground">
+              Build, manage, and scale your data streams with ease. SuiPulse
+              provides a powerful SDK and CLI for seamless data stream
+              management on the Sui blockchain.
             </p>
             <div className="mt-10 flex items-center gap-x-6">
               <motion.a

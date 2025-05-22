@@ -38,7 +38,7 @@ const components: { title: string; href: string; description: string }[] = [
   },
 ];
 
-export function Navbar() {
+const Navbar = () => {
   return (
     <div className="border-b">
       <div className="container flex h-16 items-center px-4">
@@ -104,7 +104,7 @@ export function Navbar() {
         </NavigationMenu>
         <div className="ml-auto flex items-center gap-4">
           <a
-            href="https://github.com/suipulse/suipulse"
+            href="https://github.com/bixblues/suipulse"
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
@@ -116,7 +116,9 @@ export function Navbar() {
       </div>
     </div>
   );
-}
+};
+
+Navbar.displayName = "Navbar";
 
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
@@ -142,3 +144,5 @@ const ListItem = React.forwardRef<
     </li>
   );
 });
+
+export { Navbar };

@@ -1,0 +1,229 @@
+# SuiPulse CLI
+
+The SuiPulse CLI is a powerful command-line tool that helps you interact with the SuiPulse protocol. It provides a convenient way to manage streams, snapshots, and perform various operations without writing code.
+
+## Installation
+
+Install the CLI globally using npm:
+
+```bash
+npm install -g @suipulse/cli
+```
+
+Verify the installation:
+
+```bash
+suipulse --version
+```
+
+## Basic Commands
+
+### Help and Version
+
+```bash
+# Show help
+suipulse --help
+
+# Show version
+suipulse --version
+```
+
+### Stream Management
+
+#### Create a Stream
+
+```bash
+# Create a stream with metadata
+suipulse stream create --metadata metadata.json
+```
+
+Example `metadata.json`:
+
+```json
+{
+  "name": "My Stream",
+  "description": "A test data stream",
+  "tags": ["test", "example"],
+  "version": "1.0.0"
+}
+```
+
+#### Update a Stream
+
+```bash
+# Update stream data
+suipulse stream update --id <stream-id> --data data.json
+```
+
+#### Watch Stream Events
+
+```bash
+# Subscribe to stream events in real-time
+suipulse stream watch --id <stream-id>
+```
+
+#### Get Stream Data
+
+```bash
+# Get current stream data
+suipulse stream get --id <stream-id>
+```
+
+### Snapshot Management
+
+#### Create a Snapshot
+
+```bash
+# Create a snapshot
+suipulse snapshot create --stream-id <stream-id>
+```
+
+#### Get Snapshot Data
+
+```bash
+# Get snapshot data
+suipulse snapshot get --id <snapshot-id>
+```
+
+#### Update Snapshot
+
+```bash
+# Update snapshot data
+suipulse snapshot update --id <snapshot-id> --data data.json
+```
+
+#### Update Snapshot Metadata
+
+```bash
+# Update snapshot metadata
+suipulse snapshot update-metadata --id <snapshot-id> --metadata metadata.json
+```
+
+#### Verify Snapshot
+
+```bash
+# Verify snapshot against stream
+suipulse snapshot verify --id <snapshot-id> --stream-id <stream-id>
+```
+
+#### Transfer Snapshot
+
+```bash
+# Transfer snapshot ownership
+suipulse snapshot transfer --id <snapshot-id> --to <new-owner-address>
+```
+
+### Batch Operations
+
+#### Batch Stream Creation
+
+```bash
+# Create multiple streams from a JSON file
+suipulse batch create --config streams.json
+```
+
+Example `streams.json`:
+
+```json
+{
+  "streams": [
+    {
+      "name": "Stream1",
+      "description": "First stream",
+      "tags": ["test"],
+      "version": "1.0.0"
+    },
+    {
+      "name": "Stream2",
+      "description": "Second stream",
+      "tags": ["test"],
+      "version": "1.0.0"
+    }
+  ]
+}
+```
+
+#### Batch Stream Updates
+
+```bash
+# Update multiple streams from a JSON file
+suipulse batch update --config updates.json
+```
+
+### Access Control
+
+#### Add Permission
+
+```bash
+# Add permission to a stream
+suipulse permission add --id <stream-id> --address <address> --level <level>
+```
+
+#### Check Subscription
+
+```bash
+# Check if an address is subscribed to a stream
+suipulse permission check --id <stream-id> --address <address>
+```
+
+### Stream Composition
+
+```bash
+# Compose streams (parent-child relationship)
+suipulse stream compose --parent-id <parent-stream-id> --child-id <child-stream-id>
+```
+
+### Network Configuration
+
+```bash
+# Set network (mainnet/testnet)
+suipulse config set-network --network testnet
+
+# Set custom network configuration
+suipulse config set-custom --url <rpc-url> --package-id <package-id>
+```
+
+## Best Practices
+
+1. **Security**
+
+   - Never share your private keys
+   - Keep your CLI updated
+
+2. **Performance**
+
+   - Use batch operations for multiple updates
+   - Implement proper error handling
+   - Monitor rate limits
+
+3. **Data Management**
+   - Use meaningful stream names
+   - Include relevant metadata
+   - Regular snapshots for important data
+
+## Troubleshooting
+
+Common issues and solutions:
+
+1. **Connection Errors**
+
+   - Check network configuration
+   - Verify RPC URL
+   - Ensure internet connection
+
+2. **Authentication Errors**
+
+   - Verify private key
+   - Check permissions
+   - Ensure proper network access
+
+3. **Rate Limiting**
+   - Implement delays between requests
+   - Use batch operations
+   - Contact support if needed
+
+## Next Steps
+
+- Learn about [Stream Management](/docs/sdk/stream-management)
+- Explore [Client Setup](/docs/sdk/client-setup)
+- Understand [Core Concepts](/docs/core-concepts/data-streams)

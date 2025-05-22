@@ -7,6 +7,7 @@ const sidebarItems = {
   "Getting Started": [
     { title: "Introduction", href: "/docs" },
     { title: "Quick Start", href: "/docs/quick-start" },
+    { title: "CLI", href: "/docs/cli" },
   ],
   "Core Concepts": [
     { title: "Data Streams", href: "/docs/core-concepts/data-streams" },
