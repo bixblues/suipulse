@@ -149,7 +149,8 @@ export function validateSnapshotData(
     errors.push("Invalid snapshot ID format");
   }
 
-  if (!data.streamId?.id || typeof data.streamId.id !== "string") {
+  const streamIdValue = data.streamId || data.stream_id;
+  if (!streamIdValue || typeof streamIdValue !== "string") {
     errors.push("Invalid stream ID format");
   }
 

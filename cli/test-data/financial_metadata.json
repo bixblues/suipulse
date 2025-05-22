@@ -1,0 +1,7 @@
+{
+  "name": "SUI-USD-Price-Stream",
+  "description": "Real-time SUI/USD price tracking",
+  "tags": ["finance", "price", "sui"],
+  "version": "1.0.0",
+  "isPublic": true
+}

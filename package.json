@@ -5,10 +5,11 @@
   "workspaces": [
     "contracts",
     "sdk",
-    "backend"
+    "backend",
+    "cli"
   ],
   "scripts": {
-    "build": "npm run build --workspace=sdk && npm run build --workspace=demo-app",
+    "build": "npm run build --workspace=sdk",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces"
   },

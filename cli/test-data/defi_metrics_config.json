@@ -1,0 +1,19 @@
+{
+  "streams": [
+    {
+      "name": "TVL-Tracker",
+      "description": "Total Value Locked tracking"
+    },
+    {
+      "name": "Yield-Rates",
+      "description": "Protocol yield rates"
+    },
+    {
+      "name": "User-Activity",
+      "description": "User interaction metrics"
+    }
+  ],
+  "options": {
+    "parallel": true
+  }
+}

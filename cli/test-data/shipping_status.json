@@ -1,0 +1,14 @@
+{
+  "timestamp": "2024-03-20T12:00:00Z",
+  "batch_id": "MFG-2024-001",
+  "status": "in_transit",
+  "current_location": "Distribution Center A",
+  "destination": "Warehouse B",
+  "estimated_arrival": "2024-03-21T15:00:00Z",
+  "shipping_conditions": {
+    "temperature": 22.5,
+    "humidity": 45,
+    "vibration": "normal"
+  },
+  "notes": "Package in optimal condition"
+}

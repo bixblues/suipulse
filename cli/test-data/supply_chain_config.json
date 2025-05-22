@@ -1,0 +1,28 @@
+{
+  "streams": [
+    {
+      "name": "Manufacturing-Status",
+      "description": "Manufacturing process tracking",
+      "isPublic": true,
+      "metadata": "Manufacturing process tracking data",
+      "tags": ["manufacturing", "supply-chain"]
+    },
+    {
+      "name": "Shipping-Status",
+      "description": "Shipping and logistics tracking",
+      "isPublic": true,
+      "metadata": "Shipping and logistics tracking data",
+      "tags": ["shipping", "supply-chain"]
+    },
+    {
+      "name": "Quality-Control",
+      "description": "Quality control checkpoints",
+      "isPublic": true,
+      "metadata": "Quality control checkpoint data",
+      "tags": ["quality", "supply-chain"]
+    }
+  ],
+  "options": {
+    "parallel": true
+  }
+}

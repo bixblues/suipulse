@@ -1,0 +1,6 @@
+{
+  "name": "SuiPunks-Analytics",
+  "description": "Real-time analytics for SuiPunks collection",
+  "tags": ["nft", "analytics", "sui"],
+  "version": "1.0.0"
+}

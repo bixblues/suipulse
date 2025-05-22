@@ -5,7 +5,6 @@ import {
   SuiHTTPTransport,
 } from "@mysten/sui.js/client";
 import { TransactionBlock } from "@mysten/sui.js/transactions";
-import { Keypair } from "@mysten/sui.js/cryptography";
 import {
   StreamConfig,
   SnapshotConfig,
@@ -47,7 +46,7 @@ export class SuiPulse {
   private client: SuiClient;
   private keypair: Ed25519Keypair;
   private config: SuiPulseConfig;
-  private packageId: string;
+  public packageId: string;
   public events: EventManager;
 
   /**
@@ -992,11 +991,12 @@ export class SuiPulse {
 
   private validateSnapshotData(data: Record<string, any>): boolean {
     try {
+      const streamIdValue = data.streamId || data.stream_id;
       return (
         typeof data === "object" &&
         data !== null &&
         data.id?.id &&
-        data.streamId?.id &&
+        typeof streamIdValue === "string" &&
         Array.isArray(data.data) &&
         typeof data.timestamp === "string" &&
         typeof data.version === "string" &&
@@ -1018,7 +1018,10 @@ export class SuiPulse {
 
     const fields = content.fields as Record<string, any>;
 
-    if (!this.validateSnapshotData(fields)) {
+    // Support both stream_id and streamId
+    const streamId = fields.streamId || fields.stream_id || "";
+
+    if (!this.validateSnapshotData({ ...fields, streamId })) {
       throw new SuiPulseError(
         SuiPulseErrorType.VALIDATION_ERROR,
         "Invalid snapshot data format"
@@ -1027,7 +1030,7 @@ export class SuiPulse {
 
     return {
       id: fields.id || "",
-      streamId: fields.streamId || "",
+      streamId,
       data: new Uint8Array(fields.data || []),
       timestamp: fields.timestamp?.toString() || "0",
       version: fields.version?.toString() || "0",

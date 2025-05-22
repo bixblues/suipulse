@@ -1,0 +1,12 @@
+{
+  "timestamp": "2024-03-20T12:00:00Z",
+  "batch_id": "MFG-2024-001",
+  "status": "in_progress",
+  "stage": "assembly",
+  "completion_percentage": 75,
+  "quality_metrics": {
+    "defect_rate": 0.02,
+    "efficiency": 0.95
+  },
+  "notes": "Assembly line running at optimal capacity"
+}

@@ -1,0 +1,14 @@
+{
+  "timestamp": "2024-03-20T12:00:00Z",
+  "batch_id": "MFG-2024-001",
+  "status": "pending",
+  "inspection_type": "final_quality_check",
+  "inspector": "QC-Team-A",
+  "metrics": {
+    "visual_inspection": "passed",
+    "functional_test": "passed",
+    "safety_check": "passed"
+  },
+  "issues_found": 0,
+  "notes": "Awaiting final quality inspection"
+}

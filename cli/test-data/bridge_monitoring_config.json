@@ -1,0 +1,19 @@
+{
+  "streams": [
+    {
+      "name": "Bridge-Volume",
+      "description": "Bridge transaction volume"
+    },
+    {
+      "name": "Security-Metrics",
+      "description": "Bridge security metrics"
+    },
+    {
+      "name": "User-Flow",
+      "description": "User flow statistics"
+    }
+  ],
+  "options": {
+    "parallel": true
+  }
+}

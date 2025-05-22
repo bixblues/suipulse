@@ -1,0 +1,19 @@
+{
+  "streams": [
+    {
+      "name": "Proposal-Tracker",
+      "description": "DAO proposal tracking"
+    },
+    {
+      "name": "Voting-Stats",
+      "description": "Voting statistics"
+    },
+    {
+      "name": "Treasury-Metrics",
+      "description": "DAO treasury metrics"
+    }
+  ],
+  "options": {
+    "parallel": true
+  }
+}
