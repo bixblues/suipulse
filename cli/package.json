@@ -1,6 +1,6 @@
 {
   "name": "@suipulse/cli",
-  "version": "0.1.1-cliv1",
+  "version": "0.1.2-cliv1",
   "description": "CLI tool for SuiPulse SDK",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -38,6 +38,7 @@
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "inquirer": "^8.2.6",
+    "js-yaml": "^4.1.0",
     "ora": "^5.4.1"
   },
   "devDependencies": {
