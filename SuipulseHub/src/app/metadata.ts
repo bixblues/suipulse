@@ -23,28 +23,28 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://suipulse.com"),
+  metadataBase: new URL("https://suipulse.xyz"),
   alternates: {
     canonical: "/",
   },
   icons: {
     icon: [
-      { url: "/favicon.svg" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/logo-opaque.png" },
+      { url: "/logo-opaque.png", type: "image/png" },
     ],
-    apple: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/logo-opaque.png", type: "image/png" }],
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://suipulse.com",
+    url: "https://suipulse.xyz",
     title: "SuiPulse - Real-time Data Streams on Sui",
     description:
       "Build, manage, and scale your data streams with ease. SuiPulse provides a powerful SDK and CLI for seamless data stream management on the Sui blockchain.",
     siteName: "SuiPulse",
     images: [
       {
-        url: "/favicon.svg",
+        url: "/logo-opaque.png",
         width: 630,
         height: 630,
         alt: "SuiPulse - Real-time Data Streams on Sui",
