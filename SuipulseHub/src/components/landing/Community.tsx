@@ -53,7 +53,7 @@ export function Community() {
                 Coming Soon!
               </h3>
               <p className="text-xs text-gray-200 max-w-xs sm:max-w-xl text-center">
-                We're working with the community to showcase amazing projects
+                We are working with the community to showcase amazing projects
                 built on SuiPulse.
                 <br />
                 Stay tuned for inspiring use-cases and real-world applications!
